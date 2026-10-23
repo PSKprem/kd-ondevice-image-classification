@@ -1,0 +1,43 @@
+# P25 — MobileNetV2 student WITH Knowledge Distillation (Hinton 2015)
+# L = alpha * T^2 * KL(softmax(z_s/T) || softmax(z_t/T)) + (1 - alpha) * CE(z_s, y)
+# Usage: python -m src.train --config configs/kd.yaml --teacher-ckpt D:/kd-project/runs/teacher_resnet50_cifar100/best.pt
+
+run_name: kd_mbv2_cifar100
+
+# ---- data ----
+dataset: cifar100
+data_root: D:/kd-project/data
+plantvillage_dir: D:/kd-project/data/plantvillage
+image_size: 128
+num_workers: 8
+val_split: 0.1
+
+# ---- model (student) ----
+model: mobilenetv2
+pretrained: true
+width_mult: 1.0
+
+# ---- knowledge distillation ----
+kd: true
+teacher_model: resnet50
+teacher_ckpt: D:/kd-project/runs/teacher_resnet50_cifar100/best.pt
+temperature: 4.0           # T  (sweep: 1, 2, 4, 8)
+alpha: 0.5                 # alpha (sweep: 0.1, 0.5, 0.9)
+
+# ---- optimization (MUST match baseline for fairness) ----
+epochs: 20
+batch_size: 128
+optimizer: sgd
+lr: 0.01
+momentum: 0.9
+weight_decay: 0.0005
+scheduler: cosine
+warmup_epochs: 1
+label_smoothing: 0.1
+
+# ---- runtime ----
+amp: true
+seed: 42
+out_dir: D:/kd-project/runs
+results_csv: results/results.csv
+save_every: 1

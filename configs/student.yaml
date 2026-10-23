@@ -1,0 +1,35 @@
+# P25 — MobileNetV2 student baseline (NO knowledge distillation)
+# Usage: python -m src.train --config configs/student.yaml --width-mult 0.5
+
+run_name: student_mbv2_cifar100
+
+# ---- data ----
+dataset: cifar100
+data_root: D:/kd-project/data
+plantvillage_dir: D:/kd-project/data/plantvillage
+image_size: 128
+num_workers: 8
+val_split: 0.1
+
+# ---- model ----
+model: mobilenetv2
+pretrained: true           # width 1.0 has torchvision weights; other widths fall back to timm/scratch
+width_mult: 1.0            # sweep over 0.35 / 0.5 / 0.75 / 1.0 via --width-mult
+
+# ---- optimization ----
+epochs: 20
+batch_size: 128
+optimizer: sgd
+lr: 0.01
+momentum: 0.9
+weight_decay: 0.0005
+scheduler: cosine
+warmup_epochs: 1
+label_smoothing: 0.1
+
+# ---- runtime ----
+amp: true
+seed: 42                   # SAME seed as KD runs for fair comparison
+out_dir: D:/kd-project/runs
+results_csv: results/results.csv
+save_every: 1

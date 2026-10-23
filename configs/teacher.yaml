@@ -1,0 +1,35 @@
+# P25 — ResNet-50 teacher (transfer learning, ImageNet-pretrained)
+# Usage: python -m src.train --config configs/teacher.yaml
+
+run_name: teacher_resnet50_cifar100
+
+# ---- data ----
+dataset: cifar100          # cifar100 | plantvillage
+data_root: D:/kd-project/data
+plantvillage_dir: D:/kd-project/data/plantvillage   # used only when dataset=plantvillage
+image_size: 128            # transfer-learning input size (task.md ~128 px)
+num_workers: 8
+val_split: 0.1             # used for datasets without an official val split (plantvillage)
+
+# ---- model ----
+model: resnet50            # this run trains the TEACHER
+pretrained: true           # ImageNet weights
+width_mult: 1.0            # ignored by resnet
+
+# ---- optimization ----
+epochs: 20
+batch_size: 128
+optimizer: sgd             # sgd | adamw
+lr: 0.01
+momentum: 0.9
+weight_decay: 0.0005
+scheduler: cosine          # cosine | step | none
+warmup_epochs: 1
+label_smoothing: 0.1
+
+# ---- runtime ----
+amp: true                  # mixed precision (RTX 4050, 6 GB)
+seed: 42
+out_dir: D:/kd-project/runs
+results_csv: results/results.csv
+save_every: 1              # epochs between checkpoint saves
