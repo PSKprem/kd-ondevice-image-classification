@@ -1,5 +1,5 @@
 # P25 — Knowledge Distillation for On-Device Image Classification
-# Python 3.11 environment
+# Python 3.12 environment (3.12.5 verified; 3.13+/3.14 lack wheels for torch 2.5.1 / tensorflow 2.18)
 #
 # IMPORTANT (PyTorch + CUDA):
 #   Install the CUDA build of PyTorch separately so pip pulls GPU wheels, e.g.:
@@ -14,7 +14,7 @@ torchvision==0.20.1
 timm==1.0.11
 
 # ---- Numerics / data handling ----
-numpy==2.1.3
+numpy==2.5.2                 # verified with torch 2.5.1+cu121 (may need <2.1 for tensorflow/onnx-tf at export time)
 pandas==2.2.3
 
 # ---- Plotting / progress / config ----
@@ -27,6 +27,7 @@ thop==0.1.1.post2209072238
 # fvcore==0.1.5.post20221221   # alternative to thop (uncomment if preferred)
 
 # ---- Export to ONNX / TFLite ----
+# NOT installed yet (deferred to Night 5; version-fragile on Windows, fallback Colab/WSL)
 onnx==1.17.0
 onnxruntime==1.20.1
 onnx-tf==1.10.0

@@ -178,7 +178,7 @@ def main() -> None:
             weight_decay=float(cfg.get("weight_decay", 0.0)),
         )
     scheduler = build_scheduler(optimizer, cfg, steps_per_epoch=len(train_loader))
-    scaler = torch.cuda.amp.GradScaler(enabled=amp)
+    scaler = torch.amp.GradScaler("cuda", enabled=amp)
 
     # ---- run dir + resume ----
     run_dir = Path(cfg["out_dir"]) / cfg["run_name"]
@@ -194,7 +194,7 @@ def main() -> None:
 
     # ---- train loop ----
     epochs = int(cfg["epochs"])
-    final_top1 = final_top5 = 0.0
+    final_top1 = final_top5 = best_top5 = 0.0
     for epoch in range(start_epoch, epochs):
         tr_loss, tr_top1, _ = run_epoch(
             model, train_loader, criterion, is_kd, teacher, optimizer,
@@ -209,6 +209,8 @@ def main() -> None:
               f"val_loss={va_loss:.3f} val@1={va_top1:.2f} val@5={va_top5:.2f}")
 
         is_best = va_top1 > best_acc
+        if is_best:
+            best_top5 = va_top5
         best_acc = max(best_acc, va_top1)
         if (epoch + 1) % int(cfg.get("save_every", 1)) == 0 or epoch + 1 == epochs:
             save_checkpoint(last_path, model, optimizer, scheduler, scaler,
@@ -229,7 +231,7 @@ def main() -> None:
             "temperature": cfg.get("temperature", ""), "alpha": cfg.get("alpha", ""),
             "epochs": epochs, "image_size": cfg["image_size"],
             "seed": cfg.get("seed", 42), "params_m": round(params_m, 4),
-            "best_top1": round(best_acc, 4), "best_top5": round(final_top5, 4),
+            "best_top1": round(best_acc, 4), "best_top5": round(best_top5, 4),
             "final_top1": round(final_top1, 4), "final_top5": round(final_top5, 4),
         })
         print(f"[P25] appended result to {cfg['results_csv']}")

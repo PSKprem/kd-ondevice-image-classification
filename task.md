@@ -32,7 +32,7 @@ Target finish: 5–10 Nov 2026 (leaves ~10 days buffer). Working alone is allowe
 | CPU | Intel i7-13620H (10 cores / 16 threads) | OK |
 | RAM | 16 GB | OK |
 | Disk | C: 165 GB free, D: 267 GB free | OK — store data/checkpoints on D: |
-| Python | 3.14.5 installed | Use a separate Python 3.11 env for the project |
+| Python | 3.14.5 + 3.12.5 installed | Project venv `.venv` uses Python 3.12.5 (no extra download needed) |
 
 Training precautions:
 - Laptop plugged in, sleep disabled, lid-close = "do nothing"
@@ -90,6 +90,14 @@ Fairness rules: same seed, augmentation, epochs, and starting weights for baseli
 
 Missed a night? Nothing is lost — resume the next night.
 
+Night 1 progress (24 Oct 2026):
+- [x] venv (Python 3.12.5), torch 2.5.1+cu121 (CUDA verified on RTX 4050), timm, pandas, matplotlib, tqdm, pyyaml, thop
+- [x] All code in `src/` and `scripts/` written
+- [x] CIFAR-100 downloaded to `D:\kd-project\data` (MD5 verified)
+- [x] 1-epoch smoke test passed (GPU + AMP, checkpoints saved)
+- [ ] Overnight: teacher + 4 baselines
+- Deferred to Night 5: onnx, onnxruntime, onnx-tf, tensorflow
+
 ## 8. Stop & Resume
 
 - Checkpoint `last.pt` saved every epoch (model, optimizer, scheduler, AMP scaler, epoch, best accuracy).
@@ -97,19 +105,19 @@ Missed a night? Nothing is lost — resume the next night.
 - Sweep script skips runs already in `results/results.csv`.
 - Internet is NOT needed during training (only for initial downloads).
 
-## 9. Downloads Needed (one-time, ~5–7 GB) — not installed yet
+## 9. Downloads Needed (one-time, ~5–7 GB)
 
-- [ ] Python 3.11 (separate env)
-- [ ] PyTorch + torchvision, CUDA build (~2.5–3 GB, CUDA bundled)
-- [ ] timm
-- [ ] numpy, pandas, matplotlib, tqdm, pyyaml
-- [ ] thop or fvcore (params/FLOPs)
+- [x] Python 3.12 env (used existing 3.12.5 instead of installing 3.11)
+- [x] PyTorch + torchvision, CUDA build (~2.5–3 GB, CUDA bundled)
+- [x] timm
+- [x] numpy, pandas, matplotlib, tqdm, pyyaml
+- [x] thop or fvcore (params/FLOPs)
 - [ ] onnx, onnxruntime, TFLite converter
 - [ ] kaggle CLI (PlantVillage)
 - [ ] huggingface_hub
 - [ ] Android platform-tools (adb)
-- [ ] Git (check if already installed)
-- [ ] Datasets: CIFAR-100 (~0.2 GB), PlantVillage (~1–2 GB)
+- [x] Git (2.47.0) + GitHub CLI
+- [x] CIFAR-100 (~0.2 GB)  - [ ] PlantVillage (~1–2 GB)
 
 Accounts (free): [ ] GitHub [ ] Kaggle (API key) [ ] Hugging Face (token)
 
