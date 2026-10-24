@@ -39,10 +39,21 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="P25 KD trainer")
     p.add_argument("--config", required=True, help="path to a YAML config")
     p.add_argument("--width-mult", type=float, default=None, help="override student width")
+    p.add_argument("--model", type=str, default=None,
+                   help="override model (resnet50 | mobilenetv2 | mobilenetv3_small)")
+    p.add_argument("--no-pretrained", action="store_true",
+                   help="random init instead of ImageNet weights (from-scratch experiment)")
     p.add_argument("--teacher-ckpt", type=str, default=None, help="teacher checkpoint for KD")
     p.add_argument("--temperature", type=float, default=None, help="override KD temperature T")
     p.add_argument("--alpha", type=float, default=None, help="override KD alpha")
     p.add_argument("--epochs", type=int, default=None, help="override epochs")
+    p.add_argument("--label-smoothing", type=float, default=None, help="override label smoothing")
+    p.add_argument("--lr", type=float, default=None, help="override learning rate")
+    p.add_argument("--optimizer", type=str, default=None, help="override optimizer (sgd | adamw)")
+    p.add_argument("--weight-decay", type=float, default=None, help="override weight decay")
+    p.add_argument("--warmup-epochs", type=int, default=None, help="override warmup epochs")
+    p.add_argument("--results-csv", type=str, default=None, help="override results CSV path")
+    p.add_argument("--seed", type=int, default=None, help="override random seed")
     p.add_argument("--run-name", type=str, default=None, help="override run_name")
     p.add_argument("--resume", action="store_true", help="resume from last.pt in the run dir")
     p.add_argument("--smoke-test", action="store_true", help="tiny 1-epoch end-to-end test")
@@ -131,7 +142,17 @@ def main() -> None:
         "alpha": args.alpha,
         "epochs": args.epochs,
         "run_name": args.run_name,
+        "model": args.model,
+        "label_smoothing": args.label_smoothing,
+        "lr": args.lr,
+        "optimizer": args.optimizer,
+        "weight_decay": args.weight_decay,
+        "warmup_epochs": args.warmup_epochs,
+        "results_csv": args.results_csv,
+        "seed": args.seed,
     })
+    if args.no_pretrained:
+        cfg["pretrained"] = False
 
     smoke = args.smoke_test
     if smoke:
@@ -142,6 +163,9 @@ def main() -> None:
     device = get_device()
     amp = bool(cfg.get("amp", True)) and device.type == "cuda"
     print(f"[P25] device={device} amp={amp} run={cfg.get('run_name')}")
+    print(f"[P25] recipe: opt={cfg.get('optimizer')} lr={cfg.get('lr')} "
+          f"wd={cfg.get('weight_decay')} warmup={cfg.get('warmup_epochs')} "
+          f"label_smoothing={cfg.get('label_smoothing')} epochs={cfg.get('epochs')}")
 
     # ---- data ----
     train_loader, test_loader, num_classes = build_dataloaders(cfg, smoke_test=smoke)
@@ -233,6 +257,7 @@ def main() -> None:
             "seed": cfg.get("seed", 42), "params_m": round(params_m, 4),
             "best_top1": round(best_acc, 4), "best_top5": round(best_top5, 4),
             "final_top1": round(final_top1, 4), "final_top5": round(final_top5, 4),
+            "pretrained": int(bool(cfg.get("pretrained", True))),
         })
         print(f"[P25] appended result to {cfg['results_csv']}")
 

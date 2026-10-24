@@ -29,7 +29,13 @@ def _f(row, key, default=0.0):
         return default
 
 
+def _pretrained(row) -> bool:
+    """Main results use pretrained (transfer-learning) runs only."""
+    return int(_f(row, "pretrained", 1)) == 1
+
+
 def plot_pareto(rows, out: Path) -> None:
+    rows = [r for r in rows if _pretrained(r)]
     base = [r for r in rows if int(_f(r, "kd")) == 0 and r.get("model") != "resnet50"]
     kd = [r for r in rows if int(_f(r, "kd")) == 1]
     plt.figure(figsize=(6, 4))
@@ -80,27 +86,28 @@ def plot_heatmap(rows, out: Path) -> None:
 
 
 def plot_kd_gain(rows, out: Path) -> None:
+    rows = [r for r in rows if _pretrained(r)]
     base = {}
     for r in rows:
         if int(_f(r, "kd")) == 0 and r.get("model") != "resnet50":
-            base[_f(r, "width_mult")] = _f(r, "best_top1")
-    widths, gains = [], []
+            base[(r.get("model"), _f(r, "width_mult"))] = _f(r, "best_top1")
+    sizes, gains = [], []
     for r in rows:
         if int(_f(r, "kd")) == 1:
-            w = _f(r, "width_mult")
-            if w in base:
-                widths.append(w)
-                gains.append(_f(r, "best_top1") - base[w])
-    if not widths:
-        print("[plot] no matched baseline/KD widths; skipping kd_gain.")
+            key = (r.get("model"), _f(r, "width_mult"))
+            if key in base:
+                sizes.append(_f(r, "params_m"))
+                gains.append(_f(r, "best_top1") - base[key])
+    if not sizes:
+        print("[plot] no matched baseline/KD students; skipping kd_gain.")
         return
-    order = sorted(range(len(widths)), key=lambda i: widths[i])
-    widths = [widths[i] for i in order]
+    order = sorted(range(len(sizes)), key=lambda i: sizes[i])
+    sizes = [sizes[i] for i in order]
     gains = [gains[i] for i in order]
     plt.figure(figsize=(6, 4))
-    plt.plot(widths, gains, marker="o")
+    plt.plot(sizes, gains, marker="o")
     plt.axhline(0, color="k", lw=0.8)
-    plt.xlabel("MobileNetV2 width")
+    plt.xlabel("student params (M)")
     plt.ylabel("KD gain: top-1(KD) - top-1(baseline)  (pp)")
     plt.title("When does KD help the most?")
     plt.grid(True, alpha=0.3)

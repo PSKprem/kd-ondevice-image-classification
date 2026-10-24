@@ -13,8 +13,8 @@ val_split: 0.1
 
 # ---- model ----
 model: mobilenetv2
-pretrained: true           # width 1.0 has torchvision weights; other widths fall back to timm/scratch
-width_mult: 1.0            # sweep over 0.35 / 0.5 / 0.75 / 1.0 via --width-mult
+pretrained: true           # ImageNet weights exist for MobileNetV2 w0.5 / 1.0 / 1.4 and MobileNetV3-Small
+width_mult: 1.0            # main sweep: 0.5 / 1.0 / 1.4 via --width-mult (0.35/0.75 only with --no-pretrained)
 
 # ---- optimization ----
 epochs: 20

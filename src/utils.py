@@ -170,7 +170,7 @@ def load_checkpoint(path: str | os.PathLike, model, optimizer=None,
 RESULTS_FIELDS = [
     "run_name", "dataset", "model", "width_mult", "kd", "teacher_model",
     "temperature", "alpha", "epochs", "image_size", "seed",
-    "params_m", "best_top1", "best_top5", "final_top1", "final_top5",
+    "params_m", "best_top1", "best_top5", "final_top1", "final_top5", "pretrained",
 ]
 
 
