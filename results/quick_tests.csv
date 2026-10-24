@@ -1,0 +1,5 @@
+run_name,dataset,model,width_mult,kd,teacher_model,temperature,alpha,epochs,image_size,seed,params_m,best_top1,best_top5,final_top1,final_top5,pretrained
+qt_w0.5_sgd0.01,cifar100,mobilenetv2,0.5,0,,,,4,128,42,0.8158,24.28,54.45,24.28,54.45,1
+qt_w0.5_sgd0.05,cifar100,mobilenetv2,0.5,0,,,,4,128,42,0.8158,61.39,89.61,61.39,89.61,1
+qt_w0.5_sgd0.1,cifar100,mobilenetv2,0.5,0,,,,4,128,42,0.8158,67.49,92.5,67.49,92.5,1
+qt_w0.5_adamw1e-3,cifar100,mobilenetv2,0.5,0,,,,4,128,42,0.8158,68.54,92.75,68.54,92.75,1

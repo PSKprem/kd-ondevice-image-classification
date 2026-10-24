@@ -95,7 +95,10 @@ Night 1 progress (24 Oct 2026):
 - [x] All code in `src/` and `scripts/` written
 - [x] CIFAR-100 downloaded to `D:\kd-project\data` (MD5 verified)
 - [x] 1-epoch smoke test passed (GPU + AMP, checkpoints saved)
-- [ ] Overnight: teacher + 4 baselines
+- [x] Overnight: teacher + 4 baselines (teacher 86.62, w1.0 81.76; w0.35/0.5/0.75 turned out from-scratch → relabelled `_scratch`)
+- [x] Fix: huggingface_hub 2.3.0 broke timm pretrained download → pinned 0.26.2; models.py now errors instead of silently using random init
+- [x] Pretrained baselines (24 Oct): w0.5 60.80, w1.4 82.89, MobileNetV3-Small 79.20 (`scripts/pretrained_baselines.ps1`)
+- Student set for main results (all pretrained): MBV2 w0.5 / w1.0 / w1.4 + MobileNetV3-Small; scratch runs = from-scratch comparison
 - Deferred to Night 5: onnx, onnxruntime, onnx-tf, tensorflow
 
 ## 8. Stop & Resume
