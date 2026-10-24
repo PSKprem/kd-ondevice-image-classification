@@ -11,6 +11,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -34,23 +35,53 @@ def _pretrained(row) -> bool:
     return int(_f(row, "pretrained", 1)) == 1
 
 
+# ---- Final (Experiment 4) run set: no label smoothing, adamw, seed 42, KD T=2 a=0.9 ----
+FINAL_STUDENTS = [  # (label, baseline run, KD run)
+    ("MBV2 w0.5", "student_mbv2_cifar100_w0.5_nols_adamw1e-3",
+     "kd_cifar100_w0.5_adamw1e-3_T2.0_a0.9_nols"),
+    ("MBV3-Small", "student_mbv3s_cifar100_nols_adamw1e-3",
+     "kd_cifar100_mbv3s_adamw1e-3_T2.0_a0.9_nols"),
+    ("MBV2 w1.0", "student_mbv2_cifar100_w1.0_nols_adamw1e-3",
+     "kd_cifar100_w1.0_adamw1e-3_T2.0_a0.9_nols"),
+    ("MBV2 w1.4", "student_mbv2_cifar100_w1.4_nols_adamw1e-3",
+     "kd_cifar100_w1.4_adamw1e-3_T2.0_a0.9_nols"),
+]
+FINAL_TEACHER = "teacher_resnet50_cifar100_nols"
+
+
+def final_pairs(rows):
+    """Return [(label, params_m, base_top1, kd_top1)] for students with both runs present."""
+    by_name = {r.get("run_name"): r for r in rows}
+    pairs = []
+    for label, b, k in FINAL_STUDENTS:
+        if b in by_name and k in by_name:
+            pairs.append((label, _f(by_name[b], "params_m"),
+                          _f(by_name[b], "best_top1"), _f(by_name[k], "best_top1")))
+    return sorted(pairs, key=lambda p: p[1]), by_name.get(FINAL_TEACHER)
+
+
 def plot_pareto(rows, out: Path) -> None:
-    rows = [r for r in rows if _pretrained(r)]
-    base = [r for r in rows if int(_f(r, "kd")) == 0 and r.get("model") != "resnet50"]
-    kd = [r for r in rows if int(_f(r, "kd")) == 1]
-    plt.figure(figsize=(6, 4))
-    if base:
-        plt.scatter([_f(r, "params_m") for r in base],
-                    [_f(r, "best_top1") for r in base],
-                    marker="o", label="baseline (no KD)")
-    if kd:
-        plt.scatter([_f(r, "params_m") for r in kd],
-                    [_f(r, "best_top1") for r in kd],
-                    marker="^", label="KD")
-    plt.xlabel("params (M)")
-    plt.ylabel("top-1 accuracy (%)")
-    plt.title("Accuracy vs model size (Pareto)")
-    plt.legend()
+    pairs, teacher = final_pairs(rows)
+    if not pairs:
+        print("[plot] no final baseline/KD pairs; skipping pareto.")
+        return
+    xs = [p[1] for p in pairs]
+    plt.figure(figsize=(7, 4.5))
+    plt.plot(xs, [p[2] for p in pairs], "o--", label="baseline (no KD)")
+    plt.plot(xs, [p[3] for p in pairs], "^-", label="KD (T=2, α=0.9)")
+    for label, x, b, k in pairs:
+        plt.annotate(f"{label}\n+{k - b:.2f}", (x, k), textcoords="offset points",
+                     xytext=(0, 8), ha="center", fontsize=8)
+    if teacher:
+        # teacher drawn as reference line (23.7M params would squash the x-axis)
+        ty = _f(teacher, "best_top1")
+        plt.axhline(ty, color="gray", ls=":", lw=1)
+        plt.text(0.01, ty + 0.15, f"teacher ResNet-50 ({_f(teacher, 'params_m'):.1f}M): {ty:.2f}",
+                 transform=plt.gca().get_yaxis_transform(), ha="left", fontsize=8, color="gray")
+    plt.xlabel("student params (M)")
+    plt.ylabel("CIFAR-100 top-1 (%)")
+    plt.title("Accuracy vs model size: baseline vs KD")
+    plt.legend(loc="lower right")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(out / "pareto.png", dpi=150)
@@ -58,10 +89,11 @@ def plot_pareto(rows, out: Path) -> None:
     print(f"[plot] wrote {out / 'pareto.png'}")
 
 
-def plot_heatmap(rows, out: Path) -> None:
-    kd = [r for r in rows if int(_f(r, "kd")) == 1]
+def plot_heatmap(rows, out: Path, pattern: str, fname: str, title: str) -> None:
+    rx = re.compile(pattern)
+    kd = [r for r in rows if int(_f(r, "kd")) == 1 and rx.fullmatch(r.get("run_name", ""))]
     if not kd:
-        print("[plot] no KD rows; skipping heatmap.")
+        print(f"[plot] no KD rows matching {pattern!r}; skipping {fname}.")
         return
     temps = sorted({_f(r, "temperature") for r in kd})
     alphas = sorted({_f(r, "alpha") for r in kd})
@@ -74,38 +106,34 @@ def plot_heatmap(rows, out: Path) -> None:
     plt.figure(figsize=(5, 4))
     im = plt.imshow(grid, aspect="auto", origin="lower")
     plt.colorbar(im, label="top-1 (%)")
+    for i in range(len(temps)):
+        for j in range(len(alphas)):
+            if grid[i][j] == grid[i][j]:  # not NaN
+                plt.text(j, i, f"{grid[i][j]:.1f}", ha="center", va="center",
+                         fontsize=8, color="w")
     plt.xticks(range(len(alphas)), [f"{a:g}" for a in alphas])
     plt.yticks(range(len(temps)), [f"{t:g}" for t in temps])
     plt.xlabel("alpha")
     plt.ylabel("temperature T")
-    plt.title("KD sweep: top-1 over T x alpha")
+    plt.title(title)
     plt.tight_layout()
-    plt.savefig(out / "heatmap.png", dpi=150)
+    plt.savefig(out / fname, dpi=150)
     plt.close()
-    print(f"[plot] wrote {out / 'heatmap.png'}")
+    print(f"[plot] wrote {out / fname}")
 
 
 def plot_kd_gain(rows, out: Path) -> None:
-    rows = [r for r in rows if _pretrained(r)]
-    base = {}
-    for r in rows:
-        if int(_f(r, "kd")) == 0 and r.get("model") != "resnet50":
-            base[(r.get("model"), _f(r, "width_mult"))] = _f(r, "best_top1")
-    sizes, gains = [], []
-    for r in rows:
-        if int(_f(r, "kd")) == 1:
-            key = (r.get("model"), _f(r, "width_mult"))
-            if key in base:
-                sizes.append(_f(r, "params_m"))
-                gains.append(_f(r, "best_top1") - base[key])
-    if not sizes:
-        print("[plot] no matched baseline/KD students; skipping kd_gain.")
+    pairs, _ = final_pairs(rows)
+    if not pairs:
+        print("[plot] no final baseline/KD pairs; skipping kd_gain.")
         return
-    order = sorted(range(len(sizes)), key=lambda i: sizes[i])
-    sizes = [sizes[i] for i in order]
-    gains = [gains[i] for i in order]
+    sizes = [p[1] for p in pairs]
+    gains = [p[3] - p[2] for p in pairs]
     plt.figure(figsize=(6, 4))
     plt.plot(sizes, gains, marker="o")
+    for (label, x, b, k), g in zip(pairs, gains):
+        plt.annotate(label, (x, g), textcoords="offset points", xytext=(0, 7),
+                     ha="center", fontsize=8)
     plt.axhline(0, color="k", lw=0.8)
     plt.xlabel("student params (M)")
     plt.ylabel("KD gain: top-1(KD) - top-1(baseline)  (pp)")
@@ -130,7 +158,12 @@ def main() -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     plot_pareto(rows, out)
-    plot_heatmap(rows, out)
+    # final setup: no label smoothing, adamw recipe, MBV2 w0.5, seed 42
+    plot_heatmap(rows, out, r"kd_cifar100_w0\.5_adamw1e-3_T[\d.]+_a[\d.]+_nols",
+                 "heatmap.png", "KD on MBV2 w0.5 (no LS, adamw)")
+    # old Night-2 sweep (label-smoothed teacher, sgd 0.01) -> shows the high-alpha collapse
+    plot_heatmap(rows, out, r"kd_cifar100_w0\.5_T[\d.]+_a[\d.]+",
+                 "heatmap_old_ls.png", "Old sweep: LS teacher + sgd0.01 (w0.5)")
     plot_kd_gain(rows, out)
 
 

@@ -33,3 +33,9 @@ kd_cifar100_w0.5_adamw1e-3_T2.0_a0.9_nols_s0,cifar100,mobilenetv2,0.5,1,resnet50
 student_mbv2_cifar100_w0.5_nols_adamw1e-3_s1,cifar100,mobilenetv2,0.5,0,,,,20,128,1,0.8158,75.46,95.3,75.46,95.3,1
 kd_cifar100_w0.5_adamw1e-3_T2.0_a0.5_nols_s1,cifar100,mobilenetv2,0.5,1,resnet50,2.0,0.5,20,128,1,0.8158,75.44,95.32,75.44,95.32,1
 kd_cifar100_w0.5_adamw1e-3_T2.0_a0.9_nols_s1,cifar100,mobilenetv2,0.5,1,resnet50,2.0,0.9,20,128,1,0.8158,75.63,95.34,75.52,95.33,1
+student_mbv2_cifar100_w1.0_nols_adamw1e-3,cifar100,mobilenetv2,1.0,0,,,,20,128,42,2.352,81.13,96.05,81.03,95.98,1
+kd_cifar100_w1.0_adamw1e-3_T2.0_a0.9_nols,cifar100,mobilenetv2,1.0,1,resnet50,2.0,0.9,20,128,42,2.352,82.49,96.79,82.42,96.88,1
+student_mbv2_cifar100_w1.4_nols_adamw1e-3,cifar100,mobilenetv2,1.4,0,,,,20,128,42,4.4951,82.77,96.74,82.77,96.74,1
+kd_cifar100_w1.4_adamw1e-3_T2.0_a0.9_nols,cifar100,mobilenetv2,1.4,1,resnet50,2.0,0.9,20,128,42,4.4951,84.81,97.7,84.66,97.68,1
+student_mbv3s_cifar100_nols_adamw1e-3,cifar100,mobilenetv3_small,1.0,0,,,,20,128,42,1.6204,78.3,95.54,78.26,95.59,1
+kd_cifar100_mbv3s_adamw1e-3_T2.0_a0.9_nols,cifar100,mobilenetv3_small,1.0,1,resnet50,2.0,0.9,20,128,42,1.6204,80.02,96.51,79.97,96.49,1
