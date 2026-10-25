@@ -141,6 +141,19 @@ mixed with size, so size alone cannot be credited. The final tables and figures 
 `scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still
 to come (see `task.md`).
 
+### Optimizer check (CIFAR-100, pretrained, seed 42, test top-1 KD gain in pp, KD T=2 alpha=0.9)
+
+| Student | SGD 0.01 baseline -> KD (gain) | AdamW 1e-3 baseline -> KD (gain) |
+|---|---|---|
+| MobileNetV2 w0.5 | 60.63 -> 66.88 (**+6.25**) | 74.58 -> 75.03 (+0.45) |
+| MobileNetV3-Small | 78.20 -> 79.84 (+1.64) | 78.34 -> 80.02 (+1.68) |
+| MobileNetV2 w1.0 | 80.86 -> 81.71 (+0.85) | 80.46 -> 81.53 (+1.07) |
+| MobileNetV2 w1.4 | 82.36 -> 83.61 (+1.25) | 82.18 -> 84.05 (+1.87) |
+
+With AdamW the gain rises with width (+0.45, +1.07, +1.87), so the width trend is not only an optimizer effect.
+The large SGD gain on w0.5 comes from a badly under-trained SGD baseline (60.63 vs 74.58): KD helps most when the
+student baseline is weak or under-optimized (consistent with the from-scratch result below). Single seed.
+
 ### From scratch vs pretrained (CIFAR-100, test top-1, 20 epochs, single seed for scratch)
 
 | Student | Init | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |
