@@ -175,7 +175,7 @@ Battery temperature stayed at 32.8–33.1 °C during the whole run, so no therma
 | ResNet-50 (teacher) | 90.39 / — | 85.46 / — | 225.35 / — / — | 90.33 / — / — |
 
 Findings: (1) the INT8 "mixed" models (depthwise convs kept float32) are the fastest at 1 thread for every student
-(about 14–31 % faster than FP32) and at 4 threads for w0.5, w1.0 and w1.4; plain dynamic INT8 is slower than FP32 on 4 threads
+(about 13–32 % faster than FP32) and at 4 threads for every student (only marginally for w0.5); plain dynamic INT8 is slower than FP32 on 4 threads
 for w0.5, w1.0 and w1.4; (2) for the two small models extra threads do not help (MobileNetV3-Small is even slower on 4 threads
 than on 1), the models are too small to parallelise; (3) the best compromise student (w1.0 KD, INT8 mixed) is 34x smaller than
 the FP32 teacher (2.62 vs 90.39 MiB) and 12.5x faster at 1 thread (18.0 vs 225.4 ms) for −3.7 pp accuracy (81.78 vs 85.46).
