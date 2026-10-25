@@ -71,8 +71,9 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [ ] Optional: from-scratch vs pretrained comparison redone on v2 (v1 numbers exist)
 
 ### Phase 4 — On-device measurement (core of the problem statement) ⏳ do EARLY
-- [ ] Separate export env (`.venv-export`, CPU torch) — do NOT touch the training venv. `requirements-export.txt` versions are **unverified**; `onnx-tf` is unmaintained → if it fails use `onnx2tf` or `ai-edge-torch`, or do it in Colab / WSL
-- [ ] Export test on ONE model (w1.0 KD checkpoint): PyTorch → ONNX → TFLite FP32 → INT8. Check exported accuracy ≈ PyTorch accuracy
+- [x] Separate export env `D:\kd-project\.venv-export` (CPU torch, TF 2.21, onnx2tf 2.6.9, ai-edge-quantizer); `requirements-export.txt` now holds the VERIFIED versions and what failed. Training venv untouched. All downloads went to D: (pip cache `D:\kd-project\cache\pip`, temp `D:\kd-project\tmp`)
+- [x] Export test on the w1.0 KD checkpoint: PyTorch -> ONNX -> TFLite FP32 (8.95 MiB) -> INT8 dynamic (2.5 MiB) / INT8 static (2.7 MiB). CIFAR-100 test images: FP32 81.10% (n=1000, 100% agreement with PyTorch), INT8 dynamic 83.5% (n=200, 96.5% agreement), INT8 static 83.0% (n=500, 94.8% agreement). Small n -> run the full 10k test set for the final table
+- Pipeline: `export.py --onnx-only` -> `onnx2tf -i model.onnx -o dir -b 1` -> `quantize_tflite.py` -> `eval_tflite.py`. Test artifacts in `D:\kd-project\export\test_w1.0\`
 - [ ] Export 4 student architectures (KD checkpoints; baseline and KD have identical size/latency, only accuracy differs; check INT8 accuracy for both) + teacher FP32 for reference
 - [ ] Per model record: file size (MB), params, FLOPs, median latency (ms, ~100 runs), accuracy of exported model
 - [x] Phone: Android phone available, USB debugging ON; platform-tools installed at `D:\Downloads\platform-tools-latest-windows\platform-tools\adb.exe` (not on PATH), phone connection checked by user (25 Oct)\n- [ ] Still to do: push TFLite `benchmark_model` binary to the phone, run via `scripts/benchmark.py` (pass the adb path or add it to PATH)

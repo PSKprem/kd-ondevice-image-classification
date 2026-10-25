@@ -1,27 +1,41 @@
-# P25 — ONNX / TFLite EXPORT environment (separate from requirements.txt).
+# P25 - ONNX / TFLite EXPORT environment (separate from requirements.txt).
+# VERIFIED on Windows, Python 3.12, 25 Oct 2026 (w1.0 student: FP32 tflite == PyTorch predictions on 1000 test images).
 #
-# Why separate: tensorflow 2.18 / onnx-tf require numpy<2.1, but the training env
-# uses numpy 2.5.2. Installing these into the training .venv would downgrade numpy
-# and can break training. Use a second venv (e.g. .venv-export), WSL, or Colab:
+# Why separate: this stack needs numpy 2.2 + TensorFlow 2.21, the training env must stay untouched.
 #
-#   py -3.12 -m venv .venv-export
-#   .\.venv-export\Scripts\Activate.ps1
+#   py -3.12 -m venv D:\kd-project\.venv-export
+#   D:\kd-project\.venv-export\Scripts\Activate.ps1
 #   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
 #   pip install -r requirements-export.txt
 #
-# (scripts/export.py also needs torch, torchvision, timm, pyyaml to rebuild the model
-#  from a checkpoint; the CPU build of torch is enough for export.)
+# Pipeline (see scripts/):
+#   export.py --onnx-only      PyTorch checkpoint -> model.onnx
+#   onnx2tf -i model.onnx -o <dir> -b 1          -> <dir>/model_float32.tflite  (default "flatbuffer_direct" backend)
+#   quantize_tflite.py         FP32 .tflite -> INT8 (dynamic or static) with ai-edge-quantizer
+#   eval_tflite.py             accuracy of a .tflite on the test set (+ agreement with PyTorch)
 #
-# NOTE: versions below are the original plan and have NOT been verified together.
-# onnx-tf is unmaintained and may not work with tensorflow 2.18 / Keras 3. If the
-# Task 10 export test fails, try onnx2tf or ai-edge-torch instead and update this file.
+# Notes from the setup (what did NOT work):
+#  - onnx-tf (old plan): unmaintained, not used.
+#  - onnx2tf -tb tf_converter: fails on MobileNetV2 (layout error at a Conv) -> do not use.
+#  - onnx2tf -odrqt / -oiqt outputs: dynamic-range model was broken (~1.5% acc), strict int8 unsupported (FILL op);
+#    -> quantize the FP32 .tflite with ai-edge-quantizer instead (works, see quantize_tflite.py).
+#  - onnx2tf float16 output has float16 inputs and does not run on the CPU interpreter.
+#  - Put D:\kd-project\.venv-export\Scripts on PATH when running onnx2tf (it calls the onnxsim executable).
 
-numpy<2.1
+numpy==2.2.6
+protobuf==7.35.1
+ml-dtypes==0.5.4
+pyyaml==6.0.2
+pillow==12.3.0
 timm==1.0.11
 huggingface_hub==0.26.2
-pyyaml==6.0.2
 
-onnx==1.17.0
-onnxruntime==1.20.1
-onnx-tf==1.10.0
-tensorflow==2.18.0            # provides the TFLite converter
+onnx==1.20.1
+onnxruntime==1.26.0
+onnx2tf==2.6.9
+
+tensorflow==2.21.0
+tf-keras==2.21.0
+keras==3.15.0
+ai-edge-litert==2.3.0
+ai-edge-quantizer==0.10.0
