@@ -160,6 +160,28 @@ not established. The mixed recipe recovers the accuracy (w0.5 -0.36 pp vs FP32, 
 size; the KD advantage survives quantization (+1.3 pp on w1.0 and w1.4). Because depthwise layers stay float, the
 latency gain of "mixed" may be smaller than for full INT8 — to be measured on the phone.
 
+### On-device latency (Samsung Galaxy F22 SM-E225F, Android 13, MediaTek Helio G80, CPU + XNNPACK)
+
+TFLite `benchmark_model` (nightly build of 7 Feb 2025, SHA256 `5D45116E...FABA1374`) run through `adb`, 10 warm-up + 100 measured
+inferences, median of 3 repetitions (`scripts/phone_benchmark.py`, `results/phone_latency_v2.csv`). KD checkpoints.
+Battery temperature stayed at 32.8–33.1 °C during the whole run, so no thermal throttling.
+
+| Model | File FP32 / INT8-mixed (MiB) | Test acc FP32 / INT8-mixed | 1 thread: FP32 / dynamic / mixed (ms) | 4 threads: FP32 / dynamic / mixed (ms) |
+|---|---|---|---|---|
+| MobileNetV2 w0.5 | 3.12 / 1.00 | 75.03 / 74.67 | 10.05 / 9.10 / 8.71 | 7.88 / 11.89 / 7.68 |
+| MobileNetV3-Small | 6.22 / 1.89 | 80.02 / 79.52 | 8.45 / 6.99 / 6.95 | 10.69 / 10.14 / 8.71 |
+| MobileNetV2 w1.0 | 8.95 / 2.62 | 81.71 / 81.78 | 24.11 / 18.35 / 17.98 | 13.87 / 17.18 / 12.06 |
+| MobileNetV2 w1.4 | 17.10 / 4.79 | 83.61 / 83.55 | 42.30 / 29.52 / 28.99 | 21.00 / 23.75 / 16.79 |
+| ResNet-50 (teacher) | 90.39 / — | 85.46 / — | 225.35 / — / — | 90.33 / — / — |
+
+Findings: (1) the INT8 "mixed" models (depthwise convs kept float32) are the fastest at 1 thread for every student
+(about 14–31 % faster than FP32) and at 4 threads for w0.5, w1.0 and w1.4; plain dynamic INT8 is slower than FP32 on 4 threads
+for w0.5, w1.0 and w1.4; (2) for the two small models extra threads do not help (MobileNetV3-Small is even slower on 4 threads
+than on 1), the models are too small to parallelise; (3) the best compromise student (w1.0 KD, INT8 mixed) is 34x smaller than
+the FP32 teacher (2.62 vs 90.39 MiB) and 12.5x faster at 1 thread (18.0 vs 225.4 ms) for −3.7 pp accuracy (81.78 vs 85.46).
+Caveats: single phone; the binary runs outside an Android app, which can change performance slightly; the XNNPACK delegate
+took only 80 of 120 graph nodes for w1.0 (cause not investigated); the teacher was not quantized.
+
 ### Low-data study (CIFAR-100, pretrained, test top-1, 20 epochs, single seed, KD T=2 alpha=0.9)
 
 | Student | Train data | Baseline | KD | Gain (pp) |
