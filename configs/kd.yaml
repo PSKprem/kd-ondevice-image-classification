@@ -7,7 +7,7 @@ run_name: kd_mbv2_cifar100_v2
 # ---- data ----
 dataset: cifar100
 data_root: D:/kd-project/data
-plantvillage_dir: D:/kd-project/data/plantvillage
+plantvillage_dir: D:/kd-project/data/plantvillage_raw/plantvillage dataset/color
 image_size: 128
 num_workers: 8
 val_per_class: 50          # 45k train / 5k val, stratified (50 val images per class)

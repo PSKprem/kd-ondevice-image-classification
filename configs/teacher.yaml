@@ -6,7 +6,7 @@ run_name: teacher_resnet50_cifar100_v2
 # ---- data ----
 dataset: cifar100          # cifar100 | plantvillage
 data_root: D:/kd-project/data
-plantvillage_dir: D:/kd-project/data/plantvillage   # used only when dataset=plantvillage
+plantvillage_dir: D:/kd-project/data/plantvillage_raw/plantvillage dataset/color   # used only when dataset=plantvillage
 image_size: 128            # transfer-learning input size (task.md ~128 px)
 num_workers: 8
 val_per_class: 50          # 45k train / 5k val, stratified (50 val images per class)

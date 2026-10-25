@@ -55,6 +55,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--warmup-epochs", type=int, default=None, help="override warmup epochs")
     p.add_argument("--results-csv", type=str, default=None, help="override results CSV path")
     p.add_argument("--seed", type=int, default=None, help="override random seed")
+    p.add_argument("--dataset", type=str, default=None, help="override dataset (cifar100 | plantvillage)")
+    p.add_argument("--plantvillage-dir", type=str, default=None,
+                   help="override PlantVillage 'color' folder (one sub-folder per class)")
     p.add_argument("--run-name", type=str, default=None, help="override run_name")
     p.add_argument("--resume", action="store_true", help="resume from last.pt in the run dir")
     p.add_argument("--smoke-test", action="store_true", help="tiny 1-epoch end-to-end test")
@@ -151,6 +154,8 @@ def main() -> None:
         "warmup_epochs": args.warmup_epochs,
         "results_csv": args.results_csv,
         "seed": args.seed,
+        "dataset": args.dataset,
+        "plantvillage_dir": args.plantvillage_dir,
     })
     if args.no_pretrained:
         cfg["pretrained"] = False
