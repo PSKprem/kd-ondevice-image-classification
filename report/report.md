@@ -48,15 +48,15 @@ The main findings are:
    over three seeds the test-accuracy gain is +0.46 pp (MobileNetV2 w0.5), +0.81 pp (w1.0), +1.70 pp (w1.4) and
    +1.53 pp (MobileNetV3-Small), and it is positive for every student and every seed. Inside the MobileNetV2 family the gain grows with
    width; a check with a single optimizer (AdamW) shows the same trend.
-2. **Distillation helps much more when the student is weak or under-optimized.** Without ImageNet weights the gain is
-   +2.50 pp (w0.5) and +5.60 pp (w1.0), 5–7× larger than with pretrained weights; a badly trained SGD baseline of
-   w0.5 gained +6.25 pp.
+2. **Distillation helps much more when the student is weak or under-optimized.** Within the same 20-epoch budget and without ImageNet weights the gain is
+   +2.50 pp (w0.5) and +5.60 pp (w1.0), 5–7× larger than with pretrained weights (these from-scratch students are far from converged, so this
+   partly measures faster learning); a badly trained SGD baseline of w0.5 gained +6.25 pp. This fits the known teacher–student capacity-gap effect (Section 3).
 3. **There is no consistent "KD helps most with little data" rule.** With 25 % of the data, w1.0 gains +2.03 pp
    (vs +0.85 pp with 100 %), but the tiny w0.5 gains nothing with little data (−0.22 pp at 10 %).
 4. **On PlantVillage (≈99 % accuracy) no clear effect was found** (+0.05 and +0.31 pp, single seed).
 5. **On the phone,** the best compromise student (MobileNetV2 w1.0, distilled, INT8) is **34× smaller** (2.6 vs
-   90.4 MiB) and **12.5× faster** (18.0 vs 225.4 ms per image, one CPU thread) than the teacher, for a 3.7 pp loss in accuracy
-   (81.78 % vs 85.46 %). Plain INT8 quantization failed for the smallest models; the cause was traced to their depthwise layers
+   90.4 MiB) and **12.5× faster** (18.0 vs 225.4 ms per image, one CPU thread) than the FP32 teacher, for a 3.7 pp loss in accuracy
+   (81.78 % vs 85.46 %); about 10× of the size reduction comes from the smaller architecture and 3.4× from INT8. Plain INT8 quantization failed for the smallest models; the cause was traced to their depthwise layers
    and fixed by keeping those layers in float32.
 
 All claims are accompanied by their limitations (Section 9): most auxiliary experiments are single-seed, the optimizer is
@@ -129,6 +129,14 @@ MobileNetV3-Small (Howard et al., 2019) adds squeeze-and-excitation blocks and t
 **Quantization.** Storing weights (and possibly activations) as 8-bit integers makes the file about four times smaller and
 can speed up inference (Jacob et al., 2018). Depthwise layers in MobileNets are known to be sensitive to quantization
 (e.g. Nagel et al., 2019), which is relevant to Section 7.4.
+
+**The teacher–student capacity gap.** Later work showed that distillation does not always work better with a bigger or more accurate teacher.
+Cho & Hariharan (2019) found that more accurate teachers are often not better teachers and attribute this to mismatched capacity: a small
+student cannot mimic a much larger teacher. They report that a sequence of distillation steps did not fix this, whereas stopping the teacher's
+training early helped. Mirzadeh et al. (2020) likewise observe that the student suffers when the gap to the teacher is large and propose an
+intermediate-sized *teacher assistant* (multi-step distillation) to bridge it. These results are directly relevant to this project, where one
+23.7 M-parameter teacher is distilled into students of 0.8–4.5 M parameters: the capacity-gap view predicts that the smallest students gain the
+least, which is what Section 6.4 observes. Neither remedy (early-stopped teacher, teacher assistant) was tested here.
 
 ---
 
@@ -340,9 +348,9 @@ The same students were trained **without** ImageNet weights (random initializati
 
 ![scratch vs pretrained](../results/figures/fig_scratch.png)
 
-Without pretrained weights distillation helps 5–7× more (validation agrees: +3.64 and +5.56 pp). The effect is far larger than the seed spread (≈0.2 pp).
-Caveat: 20 epochs are not enough for random-initialized networks to converge (47 % and 57 %), so part of the gain may be *faster learning* from the teacher's
-soft labels rather than a better final model.
+Within the same 20-epoch budget, distillation helps 5–7× more without pretrained weights (validation agrees: +3.64 and +5.56 pp); the effect is far larger than the seed spread (≈0.2 pp).
+Caveat: 20 epochs are far from enough for random-initialized networks to converge on CIFAR-100 (47 % and 57 %). These numbers therefore show that the teacher's soft labels make a randomly initialized student learn much faster under a
+fixed short budget; they do **not** show how large the gain would be at convergence, which would need much longer training (not run).
 
 ### 6.8 Amount of training data (O6)
 
@@ -469,10 +477,26 @@ Latency in milliseconds per image (distilled models):
 
 | | Teacher ResNet-50 (FP32) | Student MobileNetV2 w1.0, distilled, INT8-mixed | Ratio |
 |---|---|---|---|
-| File size | 90.39 MiB | 2.62 MiB | **34× smaller** |
-| Latency on the phone (1 thread) | 225.4 ms | 18.0 ms | **12.5× faster** |
+| File size | 90.39 MiB | 2.62 MiB | **34× smaller** (FP32 teacher vs INT8 student) |
+| Latency on the phone (1 thread) | 225.4 ms | 18.0 ms | **12.5× faster** (FP32 teacher vs INT8 student) |
 | Test accuracy | 85.46 % | 81.78 % | −3.68 pp |
 | Parameters | 23.71 M | 2.35 M | 10× fewer |
+
+**Where the 34× and 12.5× come from.** The headline compares an FP32 teacher with an INT8 student, so it combines two effects — a smaller
+architecture and 8-bit quantization:
+
+| Comparison | Teacher | Student w1.0 (distilled) | Ratio | What it measures |
+|---|---|---|---|---|
+| Parameters | 23.71 M | 2.35 M | 10.1× | architecture only |
+| File size, FP32 vs FP32 | 90.39 MiB | 8.95 MiB | 10.1× | architecture only |
+| File size, student FP32 → INT8-mixed | — | 8.95 → 2.62 MiB | 3.4× | quantization only |
+| File size, INT8 vs INT8 | 23.01 MiB | 2.62 MiB | 8.8× | architecture, both quantized |
+| File size, FP32 teacher vs INT8 student | 90.39 MiB | 2.62 MiB | 34.5× (≈ 10.1 × 3.4) | headline |
+| Phone latency (1 thread), FP32 vs FP32 | 225.35 ms | 24.11 ms | 9.3× | architecture only |
+| Phone latency (1 thread), FP32 teacher vs INT8 student | 225.35 ms | 17.98 ms | 12.5× | headline |
+
+The teacher's INT8 file (23.01 MiB; ResNet-50 has no depthwise layers, so the "dynamic" and "mixed" recipes give the same file) was produced
+by the same pipeline, but its accuracy and its latency on the phone were **not** measured, so an INT8-vs-INT8 comparison is available for size only.
 
 ![accuracy vs file size](../results/figures/fig_size_pareto.png)
 
@@ -488,15 +512,16 @@ budget is tighter, the distilled MobileNetV3-Small (INT8-mixed) offers 79.52 % a
 
 The project's research question was *when KD helps the most*. Putting the experiments together:
 
-1. **KD helps most when the student starts from a weak position.** The largest gains are for students without ImageNet weights (+2.5 and +5.6 pp), for a badly optimized baseline (+6.25 pp for w0.5 with SGD) and, to a lesser degree, for
+1. **KD helps most when the student starts from a weak position.** The largest gains are for students without ImageNet weights (+2.5 and +5.6 pp, within the same short 20-epoch budget, Section 6.7), for a badly optimized baseline (+6.25 pp for w0.5 with SGD) and, to a lesser degree, for
    all small data regimes of w1.0 (+1.1 to +2.0 pp). For well-initialized, well-tuned students the gain is small (+0.5 to +1.7 pp). Interpretation (a hypothesis, not tested): the teacher's soft labels supply
    information that a weak student cannot obtain from the hard labels alone, whereas a well-pretrained student already has most of it.
-2. **Among well-tuned pretrained students, the gain grows with capacity.** +0.46, +0.81 and +1.70 pp for MobileNetV2 w0.5, w1.0, w1.4 (three seeds), and +0.45, +1.07, +1.87 pp with AdamW alone (one seed). A possible explanation is that a larger student has
-   more capacity to absorb the teacher's knowledge, but we did not test this. The teacher–student accuracy *gap* does not explain it (the smallest student has the largest gap and the smallest gain).
+2. **Among well-tuned pretrained students, the gain grows with capacity.** +0.46, +0.81 and +1.70 pp for MobileNetV2 w0.5, w1.0, w1.4 (three seeds), and +0.45, +1.07, +1.87 pp with AdamW alone (one seed). This agrees with the
+   capacity-gap findings of Cho & Hariharan (2019) and Mirzadeh et al. (2020) (Section 3): a student much smaller than the teacher absorbs less of its knowledge. We did not test their remedies (early-stopped teacher, teacher assistant),
+   which would be the natural next experiment for the smallest student. Note that the teacher–student *accuracy* gap itself does not predict the gain the other way round (the smallest student has the largest gap and the smallest gain).
 3. **The architecture matters.** MobileNetV3-Small gains +1.53 pp despite having only 1.6 M parameters, more than MobileNetV2 w1.0 (2.35 M).
 4. **Distillation is not a universal benefit.** On PlantVillage (≈99 %) there is no clear effect, and the tiny w0.5 student gains nothing in the low-data setting. A saturated dataset, or a student that cannot absorb more, leaves little to gain.
 5. **The benefit is retained after compression.** The distilled models stay about 1.3 pp ahead of their baselines after INT8 export (w1.0, w1.4).
-6. **For deployment,** compression matters more than distillation: the big wins on the phone (34× smaller, 12.5× faster) come from replacing the teacher with a MobileNet and from INT8, while distillation adds 0.5–1.7 pp of accuracy at no inference cost.
+6. **For deployment,** compression matters more than distillation: the big wins on the phone (34× smaller, 12.5× faster, FP32 teacher vs INT8 student) come from replacing the teacher with a MobileNet (about 10× in size) and from INT8 (about 3.4×), see Section 7.6, while distillation adds 0.5–1.7 pp of accuracy at no inference cost.
 
 Practical guidance derived from these results: (i) always train the baseline well first — an under-trained baseline inflates the apparent benefit of KD; (ii) distillation is most valuable when pretrained weights or large amounts of data are
 unavailable; (iii) for MobileNets check depthwise layers before quantizing.
@@ -513,7 +538,7 @@ unavailable; (iii) for MobileNets check depthwise layers before quantizing.
 * Optimizer is confounded with model size in the main table (Section 6.6 partly addresses this; w0.5 under SGD is a special case).
 * A single common (T, α) = (2, 0.9) was used for all students; α = 0.5 was slightly better for the larger students (within noise). Temperature was not re-tuned per student.
 * The teacher was trained once (one seed) on all training data, also in the low-data study.
-* From-scratch runs are not converged after 20 epochs.
+* From-scratch runs are far from converged after 20 epochs (47 % and 57 %), so their KD gains describe a fixed short training budget (partly faster learning), not the gain at convergence; longer from-scratch training was not run.
 * The recipe for PlantVillage was not re-tuned.
 
 **Data**
@@ -524,7 +549,7 @@ unavailable; (iii) for MobileNets check depthwise layers before quantizing.
 * One phone (mid-range, MediaTek Helio G80), CPU only (no GPU/NNAPI delegate). Latency was measured with the native `benchmark_model` binary outside an Android app, which can differ slightly from in-app performance.
 * The XNNPACK delegate accepted only 80 of 120 graph nodes for the w1.0 model (the cause was not investigated), so the converted graphs may not be optimal.
 * The cause of the depthwise sensitivity of w0.5 is not established.
-* The teacher was not quantized, and the accuracy of INT8 models was evaluated with the TFLite interpreter on a laptop, not on the phone.
+* The teacher was not evaluated in INT8 (its INT8 file of 23.01 MiB exists, but its accuracy and phone latency were not measured), so the headline ratios compare an FP32 teacher with an INT8 student (Section 7.6 gives the breakdown); the accuracy of INT8 models was evaluated with the TFLite interpreter on a laptop, not on the phone.
 
 **Process**
 * An earlier protocol selected the best epoch on the test set; all such results were discarded as headline numbers (Appendix C).
@@ -534,8 +559,8 @@ unavailable; (iii) for MobileNets check depthwise layers before quantizing.
 ## 10. Conclusion
 
 A ResNet-50 teacher was distilled into MobileNet students of four sizes and the result was deployed and measured on a phone. Distillation consistently improved the students (+0.46 to +1.70 pp
-for pretrained MobileNetV2 widths, +1.53 pp for MobileNetV3-Small, positive in all 12 seed pairs), with the largest effects when the student lacks good initialization or optimization (+2.5 to +6.3 pp).
-The practical outcome is a distilled MobileNetV2 w1.0 that is 34× smaller and 12.5× faster than the teacher on a mid-range Android phone for a loss of 3.7 pp in accuracy, and a
+for pretrained MobileNetV2 widths, +1.53 pp for MobileNetV3-Small, positive in all 12 seed pairs), with the largest effects when the student lacks good initialization or optimization (+2.5 to +6.3 pp; the from-scratch part under a fixed 20-epoch budget).
+The practical outcome is a distilled MobileNetV2 w1.0 that is 34× smaller and 12.5× faster than the FP32 teacher on a mid-range Android phone (about 10× of the size reduction from the smaller architecture and 3.4× from INT8) for a loss of 3.7 pp in accuracy, and a
 distilled w1.4 that is within 1.9 pp of the teacher at 19× smaller size. The study also produced a methodological lesson: validation-based selection, multiple seeds and controls (optimizer, initialization, data size) change
 conclusions that a single run would suggest, and INT8 quantization of small MobileNets must be checked layer by layer.
 
@@ -581,6 +606,8 @@ python scripts\phone_benchmark.py --adb <path to adb>
 9. I. Loshchilov, F. Hutter. *Decoupled Weight Decay Regularization.* ICLR 2019. arXiv:1711.05101.
 10. R. Wightman. *PyTorch Image Models (timm).* https://github.com/huggingface/pytorch-image-models.
 11. TensorFlow Lite / LiteRT documentation: *Performance measurement* (`benchmark_model`), https://www.tensorflow.org/lite/performance/measurement.
+12. J. H. Cho, B. Hariharan. *On the Efficacy of Knowledge Distillation.* ICCV 2019. arXiv:1910.01348.
+13. S. I. Mirzadeh, M. Farajtabar, A. Li, N. Levine, A. Matsukawa, H. Ghasemzadeh. *Improved Knowledge Distillation via Teacher Assistant.* AAAI 2020, 34(04):5191–5198. arXiv:1902.03393.
 
 ---
 
@@ -588,14 +615,22 @@ python scripts\phone_benchmark.py --adb <path to adb>
 
 ### A.1 All CIFAR-100 runs of the 3-seed study (test top-1)
 
-| Student | Run | Seed 42 | Seed 0 | Seed 1 |
-|---|---|---|---|---|
-| w0.5 | baseline | 74.58 | 74.89 | 74.65 |
-| w0.5 | KD | 75.03 | 75.33 | 75.14 |
-| w1.0 | baseline | 80.86 | 80.86 | 80.74 |
-| w1.0 | KD | 81.71 | 81.75 | 81.42 |
+| Student | Run | Seed 42 | Seed 0 | Seed 1 | Mean ± std |
+|---|---|---|---|---|---|
+| MobileNetV2 w0.5 (AdamW) | baseline | 74.58 | 74.89 | 74.65 | 74.71 ± 0.16 |
+| MobileNetV2 w0.5 (AdamW) | KD | 75.03 | 75.33 | 75.14 | 75.17 ± 0.15 |
+| MobileNetV2 w0.5 (AdamW) | gain (pp) | +0.45 | +0.44 | +0.49 | +0.46 |
+| MobileNetV3-Small (AdamW) | baseline | 78.34 | 77.94 | 78.43 | 78.24 ± 0.26 |
+| MobileNetV3-Small (AdamW) | KD | 80.02 | 80.09 | 79.19 | 79.77 ± 0.50 |
+| MobileNetV3-Small (AdamW) | gain (pp) | +1.68 | +2.15 | +0.76 | +1.53 |
+| MobileNetV2 w1.0 (SGD) | baseline | 80.86 | 80.86 | 80.74 | 80.82 ± 0.07 |
+| MobileNetV2 w1.0 (SGD) | KD | 81.71 | 81.75 | 81.42 | 81.63 ± 0.18 |
+| MobileNetV2 w1.0 (SGD) | gain (pp) | +0.85 | +0.89 | +0.68 | +0.81 |
+| MobileNetV2 w1.4 (SGD) | baseline | 82.36 | 82.34 | 82.37 | 82.36 ± 0.02 |
+| MobileNetV2 w1.4 (SGD) | KD | 83.61 | 84.36 | 84.21 | 84.06 ± 0.40 |
+| MobileNetV2 w1.4 (SGD) | gain (pp) | +1.25 | +2.02 | +1.84 | +1.70 |
 
-(The per-seed values of w1.4 and MobileNetV3-Small are in `results/results_v2.csv`; gains per seed are in Section 6.4. The seed-1 distilled MobileNetV3-Small run reached 79.19 % and the seed-1 distilled w1.0 run 81.42 %.)
+All 24 runs use T = 2, α = 0.9 for KD; raw rows are in `results/results_v2.csv`.
 
 ### A.2 Exported-model agreement with PyTorch
 
