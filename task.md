@@ -44,7 +44,7 @@ The full 12-cell grid (T ∈ {1,2,4,8} × α ∈ {0.1,0.5,0.9}) on w1.0 is repor
 | MBV3-Small (baseline) | 1.62 | AdamW | 78.32 | **78.34** |
 | MBV2 w1.0 + KD (T2, α0.9) | 2.35 | SGD | 81.52 | **81.71** (+0.85) |
 
-KD for w0.5 / w1.4 / MBV3-S: **not run yet** (Phase 2).
+KD (T2, α0.9) results: w0.5 test 75.03 (+0.45), MBV3-S 80.02 (+1.68), w1.0 81.71 (+0.85), w1.4 83.61 (+1.25) — single seed, `results/kd_gain_v2.csv`. Gain is small and may be seed noise. Within the MobileNetV2 family the gain rises with width (+0.45 -> +0.85 -> +1.25 for w0.5 / w1.0 / w1.4), consistent with the v1 trend; MBV3-S (a different architecture) has the largest gain (+1.68). Single seed -> confirm with extra seeds (`--seeds`) before claiming it.
 Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds), ≈ +1.4 on w1.0, ≈ +2.0 on w1.4, ≈ +1.7 on MBV3-S → gain seems to grow with student size. Must be re-confirmed on v2.
 
 ## 4. Status checklist
