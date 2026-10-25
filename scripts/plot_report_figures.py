@@ -61,6 +61,45 @@ def fig_latency() -> None:
     plt.close()
 
 
+def fig_size_pareto() -> None:
+    """Accuracy vs model FILE size (MiB): baseline vs KD, FP32 vs INT8-mixed (seed-42 models)."""
+    ex = rd("export_eval_v2.csv")
+    def student_of(tag: str) -> str:
+        return "mbv3s" if "mbv3s" in tag else next(k for k in ("w0.5", "w1.0", "w1.4") if f"_{k}_" in tag)
+    mixed, fp_size = {}, {}
+    for r in ex:
+        kind = "kd" if r["tag"].startswith("kd_") else "baseline" if r["tag"].startswith("student_") else "teacher"
+        if kind == "teacher":
+            continue
+        s = student_of(r["tag"])
+        if r["tflite"] == "model_int8_mixed_dynamic.tflite" and r["n_images"] == "10000":
+            mixed[(kind, s)] = (float(r["size_mib"]), float(r["tflite_top1"]))
+        if r["tflite"] == "model_float32.tflite" and kind == "kd":
+            fp_size[s] = float(r["size_mib"])
+    fp_acc = {("baseline", "w0.5"): 74.58, ("baseline", "mbv3s"): 78.34, ("baseline", "w1.0"): 80.86, ("baseline", "w1.4"): 82.36,
+              ("kd", "w0.5"): 75.03, ("kd", "mbv3s"): 80.02, ("kd", "w1.0"): 81.71, ("kd", "w1.4"): 83.61}
+    order = ["w0.5", "mbv3s", "w1.0", "w1.4"]
+    plt.figure(figsize=(7.5, 4.6))
+    for kind, mk, col in (("baseline", "o", "tab:gray"), ("kd", "^", "tab:green")):
+        name = "baseline" if kind == "baseline" else "distilled (KD)"
+        plt.plot([fp_size[s] for s in order], [fp_acc[(kind, s)] for s in order], mk + "--", color=col, alpha=0.6, label=f"{name}, FP32")
+        plt.plot([mixed[(kind, s)][0] for s in order], [mixed[(kind, s)][1] for s in order], mk + "-", color=col, label=f"{name}, INT8 mixed")
+    plt.plot([90.39], [85.46], "s", color="tab:red", label="ResNet-50 teacher, FP32")
+    plt.annotate("teacher", (90.39, 85.46), textcoords="offset points", xytext=(-38, -4), fontsize=8)
+    labels = {"w0.5": "w0.5", "mbv3s": "MBV3-S", "w1.0": "w1.0", "w1.4": "w1.4"}
+    for s in order:
+        plt.annotate(labels[s], (mixed[("kd", s)][0], mixed[("kd", s)][1]), textcoords="offset points", xytext=(4, 6), fontsize=8)
+    plt.xscale("log")
+    plt.xlabel("model file size (MiB, log scale)")
+    plt.ylabel("CIFAR-100 test top-1 (%)")
+    plt.title("Accuracy vs model size (file on disk): baseline vs KD, FP32 vs INT8")
+    plt.legend(fontsize=7, loc="lower right")
+    plt.grid(True, alpha=0.3, which="both")
+    plt.tight_layout()
+    plt.savefig(OUT / "fig_size_pareto.png", dpi=150)
+    plt.close()
+
+
 def fig_lowdata() -> None:
     rows = rd("summary_lowdata_v2.csv")
     plt.figure(figsize=(6, 4))
@@ -124,6 +163,6 @@ def fig_optimizer() -> None:
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
-    for fn in (fig_latency, fig_lowdata, fig_scratch, fig_optimizer):
+    for fn in (fig_latency, fig_size_pareto, fig_lowdata, fig_scratch, fig_optimizer):
         fn()
         print("[fig]", fn.__name__)

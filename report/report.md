@@ -37,7 +37,7 @@
 
 We study how well a large image classifier can be compressed into a small network that runs on a phone. A
 ResNet-50 teacher (23.7 M parameters) is distilled (Hinton et al., 2015) into MobileNet students of four sizes
-(0.82 M – 4.50 M parameters) on CIFAR-100, and the exported models are measured on a mid-range Android phone
+(0.82 M – 4.50 M parameters) on CIFAR-100, and the latency of the exported models is measured on a mid-range Android phone
 (Samsung Galaxy F22). All model and hyper-parameter choices are made on a held-out validation split; the test set
 is used only for reporting.
 
@@ -78,7 +78,7 @@ Large neural networks give the best accuracy but are too big and slow for phones
 | O2 | Train a MobileNetV2 student normally (baseline, no KD) | §6.2 |
 | O3 | Train the student with knowledge distillation and compare with the baseline | §6.3, §6.4 |
 | O4 | Vary the temperature *T* and weight *α* | §6.3, §6.5 |
-| O5 | Measure latency, model size and accuracy on-device | §7 |
+| O5 | Measure latency, model size and classification accuracy on-device | §7 — latency and size on the phone; accuracy of the exported models measured with the TFLite interpreter on a laptop, **not on the phone** (see §9) |
 | O6 (research angle) | Analyse the accuracy-vs-size Pareto curve: **when does KD help the most?** | §6.4, §6.6–6.9, §8 |
 
 ### 2.3 Contributions
@@ -89,6 +89,28 @@ Large neural networks give the best accuracy but are too big and slow for phones
 * A complete export pipeline (PyTorch → ONNX → TFLite, FP32 and INT8) with accuracy verification on the full test set.
 * A diagnosis of why INT8 quantization breaks the smallest MobileNets, and a mixed-precision fix.
 * On-device latency measurements of every exported model on a real phone.
+
+### 2.4 Compliance with the project brief
+
+The brief (`project.md`, and the project sheet entry for P25: *"Train ResNet-50 teacher → MobileNetV2 student trained normally vs with KD (vary temperature, alpha) → measure latency/size"*;
+suggested datasets *"CIFAR-100 or PlantVillage"*; research angle *"Accuracy-vs-model-size Pareto curve; when does KD help most?"*) was followed as follows.
+
+| Requirement in the brief | Status | Note |
+|---|---|---|
+| ResNet-50 teacher | Done | §6.1 |
+| MobileNetV2 student, baseline (no KD) | Done | §6.2; three widths (0.5 / 1.0 / 1.4) |
+| MobileNetV2 student with KD, compared with the baseline | Done | §6.4, three seeds |
+| Vary temperature T and α | Done | §6.3 (4 × 3 grid), §6.5 (α probe) |
+| Datasets: CIFAR-100 *or* PlantVillage | Done for both | CIFAR-100 main, PlantVillage secondary (approximate split, §4.4) |
+| Measure latency on a phone | Done | §7.5, Samsung Galaxy F22 |
+| Measure model size | Done | file sizes in §7.3; parameters in §4.2 |
+| Measure classification accuracy on-device | **Partly** | accuracy of every exported `.tflite` was measured with the TFLite interpreter on a laptop on the full test set; the phone itself was used only for latency (§9) |
+| Accuracy-vs-model-size Pareto curve | Done | accuracy vs parameters (§6.4) and accuracy vs file size, FP32 and INT8 (§7.6) |
+| Answer *when does KD help the most?* | Done | §6.4–6.8 and §8 |
+| Reference papers (Hinton 2015, Sandler 2018) | Done | §3, §12 |
+| Deliverables: report and GitHub repository | Report: this document; repository: yes (private) | §11 |
+
+Additions beyond the brief: a second student architecture (MobileNetV3-Small), controls for optimizer, initialization and data size, the INT8 diagnosis, and the three-seed statistics.
 
 ---
 
@@ -134,7 +156,7 @@ The teacher is frozen (`eval()` mode, no gradients) and sees exactly the same au
 | Student | MobileNetV2, width 1.0 | 2.35 M | torchvision `IMAGENET1K_V2` |
 | Student | MobileNetV2, width 1.4 | 4.50 M | timm `mobilenetv2_140.ra_in1k` |
 
-All networks get a fresh classification head for the target dataset and are fine-tuned end-to-end. (A width-0.35 and a width-0.75
+All networks get a fresh classification head for the target dataset and are fine-tuned end-to-end. MobileNetV3-Small is an addition to the brief (which names MobileNetV2); it provides a second architecture for the size analysis. (A width-0.35 and a width-0.75
 MobileNetV2 exist only without pretrained weights and were used only in early exploratory runs, see Appendix C.)
 
 ### 4.3 Training recipe
@@ -451,6 +473,11 @@ Latency in milliseconds per image (distilled models):
 | Latency on the phone (1 thread) | 225.4 ms | 18.0 ms | **12.5× faster** |
 | Test accuracy | 85.46 % | 81.78 % | −3.68 pp |
 | Parameters | 23.71 M | 2.35 M | 10× fewer |
+
+![accuracy vs file size](../results/figures/fig_size_pareto.png)
+
+The accuracy-vs-size curve in terms of file size (seed-42 models, test set, full 10 000 images for INT8): at every size the distilled model is above its baseline, in FP32 and after INT8 export, and the INT8-mixed
+distilled models move the whole curve to the left (files 3.1–3.6× smaller) at almost unchanged accuracy.
 
 If the accuracy requirement is stricter, the distilled w1.4 student (INT8-mixed) reaches 83.55 % (−1.9 pp vs the teacher) at 4.79 MiB and 29.0 ms (19× smaller, 7.8× faster). If the latency
 budget is tighter, the distilled MobileNetV3-Small (INT8-mixed) offers 79.52 % at 6.95 ms.
