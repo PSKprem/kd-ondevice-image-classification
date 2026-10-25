@@ -78,7 +78,7 @@ Large neural networks give the best accuracy but are too big and slow for phones
 | O2 | Train a MobileNetV2 student normally (baseline, no KD) | §6.2 |
 | O3 | Train the student with knowledge distillation and compare with the baseline | §6.3, §6.4 |
 | O4 | Vary the temperature *T* and weight *α* | §6.3, §6.5 |
-| O5 | Measure latency, model size and classification accuracy on-device | §7 — latency and size on the phone; accuracy of the exported models measured with the TFLite interpreter on a laptop, **not on the phone** (see §9) |
+| O5 | Measure latency and model size on a phone (the project sheet); `project.md` also lists classification accuracy on-device | §7 — latency and size on the phone; accuracy of the exported models measured with the TFLite interpreter on a laptop, **not on the phone** (see §9) |
 | O6 (research angle) | Analyse the accuracy-vs-size Pareto curve: **when does KD help the most?** | §6.4, §6.6–6.9, §8 |
 
 ### 2.3 Contributions
@@ -102,9 +102,8 @@ suggested datasets *"CIFAR-100 or PlantVillage"*; research angle *"Accuracy-vs-m
 | MobileNetV2 student with KD, compared with the baseline | Done | §6.4, three seeds |
 | Vary temperature T and α | Done | §6.3 (4 × 3 grid), §6.5 (α probe) |
 | Datasets: CIFAR-100 *or* PlantVillage | Done for both | CIFAR-100 main, PlantVillage secondary (approximate split, §4.4) |
-| Measure latency on a phone | Done | §7.5, Samsung Galaxy F22 |
-| Measure model size | Done | file sizes in §7.3; parameters in §4.2 |
-| Measure classification accuracy on-device | **Partly** | accuracy of every exported `.tflite` was measured with the TFLite interpreter on a laptop on the full test set; the phone itself was used only for latency (§9) |
+| Measure latency and model size (project sheet: *"measure latency/size"*) | Done | latency on the phone (§7.5), file sizes (§7.3), parameters (§4.2) |
+| Measure classification accuracy on-device (stated only in `project.md`, not in the project sheet) | **Partly** | accuracy of every exported `.tflite` was measured with the TFLite interpreter on a laptop on the full test set; the phone itself was used for latency (§9) |
 | Accuracy-vs-model-size Pareto curve | Done | accuracy vs parameters (§6.4) and accuracy vs file size, FP32 and INT8 (§7.6) |
 | Answer *when does KD help the most?* | Done | §6.4–6.8 and §8 |
 | Reference papers (Hinton 2015, Sandler 2018) | Done | §3, §12 |
