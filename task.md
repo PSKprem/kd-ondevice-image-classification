@@ -1,206 +1,163 @@
 # P25 — Task Plan: Knowledge Distillation for On-Device Image Classification
 
-> Project brief: see `project.md`
+> Brief: `project.md` · How to run: `README.md` · Last updated: 25 Oct 2026
+> **Working alone** (the 4-member team split of the original plan is not used; say this honestly in the report).
 
-## 1. Project Summary
+## 1. Summary
 
 | Field | Details |
 |---|---|
-| Project ID | P25 |
-| Title | Knowledge Distillation for On-Device Image Classification |
-| Section / Team | Section B / Team 25 |
-| Domain | Image |
-| Members | Shivang Dubey (su-24137), Moirangthem Joel Singh (su-24080), Rajiv Kumar (su-24109), Prem Shankar Kushawaha (su-24100) |
-| Goal | Compress a ResNet-50 teacher into a MobileNetV2 student that runs on a phone with minimal accuracy loss |
-| Research question | When does Knowledge Distillation help the most? (Accuracy-vs-model-size Pareto curve) |
-| Datasets | CIFAR-100, PlantVillage |
+| Project ID / Team | P25 / Section B, Team 25 |
+| Goal | Compress a ResNet-50 teacher into a small MobileNet student that runs on a phone with minimal accuracy loss |
+| Research question | **When does Knowledge Distillation help the most?** (accuracy-vs-model-size Pareto curve) |
+| Datasets | CIFAR-100 (main), PlantVillage (second, smaller study) |
+| Deliverables | Project Report + GitHub repo (1 per group) |
+| **Deadline** | **20 Nov 2026, 11:59 PM IST** |
+| Personal target | Finish by **10 Nov** (≈10 days buffer) |
 | References | Hinton et al. 2015 (arXiv:1503.02531), Sandler et al. CVPR 2018 (arXiv:1801.04381) |
 
-## 2. Deliverables & Deadline
+## 2. Decisions that are FINAL (do not re-debate)
 
-- [ ] Project Report
-- [ ] Project on GitHub (1 repo per group)
-
-**Deadline: 20 Nov 2026, 11:59 PM IST**
-Target finish: 5–10 Nov 2026 (leaves ~10 days buffer). Working alone is allowed.
-
-## 3. Hardware (checked)
-
-| Component | Spec | Status |
-|---|---|---|
-| GPU | NVIDIA RTX 4050 Laptop, 6 GB VRAM, CUDA 13.1 driver | OK — use AMP (mixed precision) |
-| CPU | Intel i7-13620H (10 cores / 16 threads) | OK |
-| RAM | 16 GB | OK |
-| Disk | C: 165 GB free, D: 267 GB free | OK — store data/checkpoints on D: |
-| Python | 3.14.5 + 3.12.5 installed | Project venv `.venv` uses Python 3.12.5 (no extra download needed) |
-
-Training precautions:
-- Laptop plugged in, sleep disabled, lid-close = "do nothing"
-- Hard flat surface / cooling pad (avoid thermal throttling)
-- Pause Windows Update during training week
-- Avoid games / GPU-heavy apps while training (light work is fine)
-
-## 4. Chosen Approach: Option C (Hybrid)
-
-Main results with **transfer learning** (ImageNet-pretrained, ~128 px inputs, 10–30 epochs) + one small **from-scratch** experiment for comparison (adds to the research angle).
-
-| Option | Total GPU time | Alone (full) | Team |
-|---|---|---|---|
-| A: From scratch | ~40–60 h | 3–4 weeks | ~2 weeks |
-| B: Transfer learning | ~12–15 h | 2–2.5 weeks | 1–1.5 weeks |
-| **C: Hybrid (chosen)** | **~20–25 h** | **2.5–3 weeks** | **~1.5 weeks** |
-| C with AI assistance | ~20–25 h | **~7 night sessions** | — |
-
-Note: torchvision has pretrained MobileNetV2 only at width 1.0; timm has some other widths — verify during setup.
-
-## 5. Experiments
-
-| # | Experiment | Runs | Est. time / run |
-|---|---|---|---|
-| 1 | ResNet-50 teacher (fine-tune) | 1 | 30–60 min |
-| 2 | MobileNetV2 baseline, no KD (widths 0.35 / 0.5 / 0.75 / 1.0) | 4 | 15–40 min |
-| 3 | T × α sweep on one width (T ∈ {1,2,4,8}, α ∈ {0.1,0.5,0.9}) | 12 | ~15 min |
-| 4 | Final KD runs with best (T, α), all widths | 4 | ~40 min |
-| 5 | PlantVillage: teacher + students (baseline & KD) | ~9 | 0.5–2 h |
-| 6 | From-scratch comparison (small) | few | 1.5–2 h |
-| 7 | Optional: low-data (10% / 25% / 100%) | ~6 | ~1 h |
-
-KD loss (Hinton 2015):
-`L = α · T² · KL(softmax(z_s/T) || softmax(z_t/T)) + (1 − α) · CE(z_s, y)`
-
-Fairness rules: same seed, augmentation, epochs, and starting weights for baseline vs KD.
-
-## 6. On-Device Measurement
-
-- Export: PyTorch → ONNX → TFLite (FP32 + INT8). If Windows tools fail, do this step in Colab/WSL.
-- Benchmark on Android phone via adb (`benchmark_model`), USB debugging ON.
-- Record per model: file size (MB), params, FLOPs, median latency (ms, ~100 runs), accuracy of exported model.
-
-## 7. Night-by-Night Plan (2–3 h sessions)
-
-| Night | Your session | Overnight (unattended) | Done |
-|---|---|---|---|
-| 1 | Setup env, write code, 1-epoch test | Teacher + 4 baselines | [x] |
-| 2 | Check results, understand code | T × α sweep | [x] (v1, then redone as v2) |
-| 3 | Pick best T/α, review plots | Final KD runs | [~] v1 done; v2 Exp 4 queued |
-| 4 | Prepare PlantVillage | PlantVillage + from-scratch | [ ] |
-| 5 | Export TFLite, phone benchmark | — | [ ] |
-| 6 | Plots, tables, report draft | — | [ ] |
-| 7 | Review report, GitHub, buffer | — | [ ] |
-
-Missed a night? Nothing is lost — resume the next night.
-
-Night 1 progress (24 Oct 2026):
-- [x] venv (Python 3.12.5), torch 2.5.1+cu121 (CUDA verified on RTX 4050), timm, pandas, matplotlib, tqdm, pyyaml, thop
-- [x] All code in `src/` and `scripts/` written
-- [x] CIFAR-100 downloaded to `D:\kd-project\data` (MD5 verified)
-- [x] 1-epoch smoke test passed (GPU + AMP, checkpoints saved)
-- [x] Overnight: teacher + 4 baselines (teacher 86.62, w1.0 81.76; w0.35/0.5/0.75 turned out from-scratch → relabelled `_scratch`)
-- [x] Fix: huggingface_hub 2.3.0 broke timm pretrained download → pinned 0.26.2; models.py now errors instead of silently using random init
-- [x] Pretrained baselines (24 Oct): w0.5 60.80, w1.4 82.89, MobileNetV3-Small 79.20 (`scripts/pretrained_baselines.ps1`)
-- Student set for main results (all pretrained): MBV2 w0.5 / w1.0 / w1.4 + MobileNetV3-Small; scratch runs = from-scratch comparison
-- Deferred to Night 5: onnx, onnxruntime, onnx-tf, tensorflow
-
-Nights 2–3 (24 Oct 2026) — v1 protocol (best epoch picked on TEST → optimistic, kept only as history in `results/results.csv`):
-- [x] T × α sweep on w0.5, recipe/label-smoothing/seed checks, Exp 4 on all widths (T=2, α=0.9)
-- v1 finding: KD gain ≈ 0 on w0.5 (3 seeds), +1.4 w1.0, +2.0 w1.4, +1.7 MBV3-Small → gain grows with student size (opposite of the naive guess)
-
-v2 protocol (24–25 Oct 2026) — 45k train / 5k val / 10k test; best epoch + T/α/recipe chosen on VAL, test reported only (see README):
-- [x] Teacher ResNet-50 (v2): val 86.06 / test 85.46
-- [x] 8 baselines (4 students × SGD 0.01 / AdamW 1e-3) → best recipe per student in `results/best_recipes_v2.csv`
-      (w0.5 adamw, w1.0 sgd, w1.4 sgd, MBV3-S adamw)
-- [x] Full T × α grid (12 runs) on w1.0 → best T=4, α=0.9 (val 81.86) → `results/best_config_v2.json`, `figures/heatmap_v2.png`
-      (grid spread only ~1.3 pp → differences between neighbouring cells are near seed noise)
-- [ ] Exp 4 v2: `scripts/queue_v2_exp4.ps1` = KD (T=4, α=0.9) on w0.5 / w1.4 / MBV3-S + seeds 0,1 for baseline & KD on w0.5, w1.0
-      → `results/kd_gain_v2.csv` (~2.5 h overnight)
-- [ ] Re-do plots (Pareto, KD gain vs width) from `results_v2.csv`; `plot_results.py` still reads v1 CSV
-- [ ] Early TFLite export test on w1.0 (de-risk Windows export) — do BEFORE PlantVillage
-- Working alone (team split in section 13 is not used). State this honestly in the report/README.
-
-## 8. Stop & Resume
-
-- Checkpoint `last.pt` saved every epoch (model, optimizer, scheduler, AMP scaler, epoch, best accuracy).
-- Stop anytime with `Ctrl+C`; restart with `--resume` → loses at most 1 epoch (~1–3 min).
-- Sweep script skips runs already in `results/results.csv`.
-- Internet is NOT needed during training (only for initial downloads).
-
-## 9. Downloads Needed (one-time, ~5–7 GB)
-
-- [x] Python 3.12 env (used existing 3.12.5 instead of installing 3.11)
-- [x] PyTorch + torchvision, CUDA build (~2.5–3 GB, CUDA bundled)
-- [x] timm
-- [x] numpy, pandas, matplotlib, tqdm, pyyaml
-- [x] thop or fvcore (params/FLOPs)
-- [ ] onnx, onnxruntime, TFLite converter
-- [ ] kaggle CLI (PlantVillage)
-- [ ] huggingface_hub
-- [ ] Android platform-tools (adb)
-- [x] Git (2.47.0) + GitHub CLI
-- [x] CIFAR-100 (~0.2 GB)  - [ ] PlantVillage (~1–2 GB)
-
-Accounts (free): [ ] GitHub [ ] Kaggle (API key) [ ] Hugging Face (token)
-
-## 10. Repository Structure (~15–20 files)
-
-```
-kd-on-device/
-├── README.md
-├── project.md
-├── task.md
-├── requirements.txt
-├── .gitignore
-├── configs/        teacher.yaml, student.yaml, kd.yaml
-├── src/            data.py, models.py, kd_loss.py, train.py, evaluate.py, utils.py
-├── scripts/        sweep.py, export.py, benchmark.py, plot_results.py
-├── results/        results.csv, figures/
-├── notebooks/      analysis.ipynb (optional)
-└── report/         report.pdf
-```
-
-## 11. Storage Plan
-
-| Item | Location | Size | Upload |
-|---|---|---|---|
-| Python env + PyTorch | Laptop | ~5 GB | No |
-| Datasets | Laptop (D:\kd-project) | ~1.5–2 GB | No (link in README) |
-| All checkpoints | Laptop (D:\kd-project) | ~2–3 GB | No |
-| Code, configs, results.csv, plots, report | Laptop + GitHub | <60 MB | GitHub |
-| Final best models + .tflite | Laptop + Hugging Face | ~200–300 MB | Hugging Face (or GitHub Release) |
-| Backup of best checkpoints | Google Drive / OneDrive | ~300 MB | Recommended |
-
-Security: never commit the Hugging Face token or Kaggle key; use `huggingface-cli login` / env variables; keep secrets in `.gitignore`.
-
-## 12. Report Outline
-
-1. Introduction
-2. Related Work (Hinton 2015, MobileNetV2)
-3. Method (KD loss, T and α)
-4. Experimental Setup (datasets, models, hardware, training details)
-5. Results
-   - Teacher vs baseline student vs KD student (accuracy, size, latency)
-   - T × α heatmap
-   - Accuracy-vs-size Pareto curve (baseline vs KD)
-   - KD gain vs width; pretrained vs from-scratch; CIFAR-100 vs PlantVillage
-6. Discussion — When does KD help the most?
-7. Conclusion
-8. References
-
-## 13. Optional Team Split
-
-| Member | Responsibility |
+| Topic | Decision |
 |---|---|
-| Shivang Dubey | Teacher training, shared training code |
-| Moirangthem Joel Singh | Student baselines, width variants |
-| Rajiv Kumar | KD implementation, T × α sweep |
-| Prem Shankar Kushawaha | PlantVillage, export, phone benchmarking |
-| All | Analysis and report |
+| Approach | Transfer learning (ImageNet-pretrained), 128 px, 20 epochs, AMP. From-scratch only as a small side comparison |
+| Protocol (v2) | CIFAR-100 train 50k → **45k train / 5k val** (fixed `split_seed 42`). Best epoch + recipe chosen on **val**; the 10k **test** set is only reported (`test_top1` = headline) |
+| v1 results (`results/results.csv`) | Picked best epoch on test → optimistic. **History only; never use for headline numbers** |
+| Teacher | ResNet-50, SGD lr 0.01, label smoothing 0 |
+| Students | MobileNetV2 width 0.5 / 1.0 / 1.4 and MobileNetV3-Small (extra point for the Pareto curve). All pretrained |
+| Recipe per student (chosen on val) | w0.5 → AdamW 1e-3 · w1.0 → SGD 0.01 · w1.4 → SGD 0.01 · MBV3-S → AdamW 1e-3 |
+| KD setting | **One common setting T = 2, α = 0.9 for all students** (see reason below) |
+| Fairness | Baseline vs KD: same seed, augmentation, epochs, recipe, starting weights |
 
-Each member should commit their own part to GitHub (graders may check commit history) and be able to explain the code and results.
+Why T = 2, α = 0.9 for all: on the w1.0 grid its val score is 81.52 vs best 81.86 (difference is within noise; val SE ≈ 0.55 pp);
+it does no harm on w0.5 (AdamW); it gave +1.7 … +2.0 pp on w1.4 / MBV3-S in v1.
+The full 12-cell grid (T ∈ {1,2,4,8} × α ∈ {0.1,0.5,0.9}) on w1.0 is reported as the T × α heatmap; the differences between neighbouring cells are near seed noise, so claims must stay modest.
 
-## 14. Risks
+## 3. Results so far (CIFAR-100, v2, `results/results_v2.csv`)
 
-- Laptop sleep / Windows Update restarts → disable sleep, pause updates, use `--resume`
-- Thermal throttling → cooling, hard surface
-- TFLite export version issues → budget extra ½ day; fallback to Colab/WSL
-- Missing pretrained weights for some MobileNetV2 widths → train from scratch or pick available widths
-- GitHub 100 MB file limit → keep checkpoints out of git
+| Model | Params (M) | Recipe | val top-1 | **test top-1** |
+|---|---|---|---|---|
+| ResNet-50 teacher | 23.71 | SGD 0.01 | 86.06 | **85.46** |
+| MBV2 w0.5 (baseline) | 0.82 | AdamW | 74.90 | **74.58** |
+| MBV2 w1.0 (baseline) | 2.35 | SGD | 80.74 | **80.86** |
+| MBV2 w1.4 (baseline) | 4.50 | SGD | 82.58 | **82.36** |
+| MBV3-Small (baseline) | 1.62 | AdamW | 78.32 | **78.34** |
+| MBV2 w1.0 + KD (T2, α0.9) | 2.35 | SGD | 81.52 | **81.71** (+0.85) |
+
+KD for w0.5 / w1.4 / MBV3-S: **not run yet** (Phase 2).
+Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds), ≈ +1.4 on w1.0, ≈ +2.0 on w1.4, ≈ +1.7 on MBV3-S → gain seems to grow with student size. Must be re-confirmed on v2.
+
+## 4. Status checklist
+
+### Phase 0 — Setup & code ✅
+- [x] venv (Python 3.12.5), torch 2.5.1+cu121 (CUDA OK on RTX 4050), timm, pandas, matplotlib, pyyaml, thop; `huggingface_hub` pinned 0.26.2
+- [x] `src/` (data, models, kd_loss, train, evaluate, utils) and `scripts/` written, smoke test passed
+- [x] CIFAR-100 in `D:\kd-project\data`
+- [x] Git: v2 code + results committed (history: `5a8b8f4`, `93796a2`, `2fedcba`)
+
+### Phase 1 — CIFAR-100 v2: teacher, baselines, T × α sweep ✅
+- [x] Teacher ResNet-50 (v2)
+- [x] 8 baselines (4 students × SGD / AdamW) → `results/best_recipes_v2.csv`
+- [x] Full T × α grid on w1.0 (12 runs) → `results/best_config_v2.json`, `results/figures/heatmap_v2.png`
+- [x] v1 experiments (history only): sweep on w0.5, recipe / label-smoothing / seed checks, from-scratch w0.35 / 0.5 / 0.75
+
+### Phase 2 — KD on every student (Pareto data) ⏳ NEXT
+- [ ] Run `scripts\queue_v2_exp4.ps1` → KD (T2, α0.9) on w0.5, w1.4, MBV3-S (~50 min). Writes `results/kd_gain_v2.csv`
+- [ ] Optional: `python scripts/queue_v2_exp4.py --seeds` → seeds 0, 1 for baseline + KD on w0.5, w1.0 (~1.7 h) to show gain vs seed noise
+
+### Phase 3 — Plots & tables
+- [ ] Update `scripts/plot_results.py` to read `results_v2.csv` (currently reads v1 `results.csv`, `--csv` default)
+- [ ] Figures: Pareto (test acc vs params, baseline vs KD, + teacher), KD gain vs width, T × α heatmap (have), student-vs-teacher table
+- [ ] Optional: from-scratch vs pretrained comparison redone on v2 (v1 numbers exist)
+
+### Phase 4 — On-device measurement (core of the problem statement) ⏳ do EARLY
+- [ ] Separate export env (`.venv-export`, CPU torch) — do NOT touch the training venv. `requirements-export.txt` versions are **unverified**; `onnx-tf` is unmaintained → if it fails use `onnx2tf` or `ai-edge-torch`, or do it in Colab / WSL
+- [ ] Export test on ONE model (w1.0 KD checkpoint): PyTorch → ONNX → TFLite FP32 → INT8. Check exported accuracy ≈ PyTorch accuracy
+- [ ] Export 4 student architectures (KD checkpoints; baseline and KD have identical size/latency, only accuracy differs; check INT8 accuracy for both) + teacher FP32 for reference
+- [ ] Per model record: file size (MB), params, FLOPs, median latency (ms, ~100 runs), accuracy of exported model
+- [ ] Phone: Android platform-tools (adb), USB debugging, `benchmark_model` via `scripts/benchmark.py` — **needs an Android phone**
+- [ ] If no phone: measure CPU latency on the laptop (TFLite / onnxruntime) and label it clearly as a *proxy*, not on-device
+
+### Phase 5 — PlantVillage (smaller study) ⏳
+- [ ] Kaggle account + API key (never commit `kaggle.json`), download PlantVillage (~1–2 GB) to `D:\kd-project\data\plantvillage`
+- [ ] **Implement `_build_plantvillage` in `src/data.py`** (currently raises `NotImplementedError`). Needs a *grouped* train/val/test split (all photos of one leaf in the same split), otherwise results leak
+- [ ] Runs (≈5): teacher ResNet-50 + MBV2 w0.5 and w1.0, each baseline and KD (T2, α0.9, same recipes as CIFAR-100; recipe not re-tuned — state this)
+- [ ] Expect accuracy near ceiling (~99%) → small KD gain; report honestly
+
+### Phase 6 — Optional (only if time remains)
+- [ ] Low-data study (10% / 25% / 100% training data) on one student
+- [ ] Extra seeds for more students
+
+### Phase 7 — Report & GitHub
+- [ ] Report draft (outline in section 9), final PDF in `report/report.pdf`
+- [ ] README final check (commands work from a clean clone; results tables match CSVs)
+- [ ] Push to GitHub (no `*.pt`, no secrets); keep commit history meaningful
+- [ ] Upload best checkpoints + `.tflite` to Hugging Face / GitHub Release; backup to OneDrive / Drive
+- [ ] Update this file when each phase is finished
+
+## 5. Timeline (today = 25 Oct, deadline = 20 Nov)
+
+| Dates | Plan |
+|---|---|
+| 25 Oct | Phase 2 (start queue, ~50 min) + Phase 3 plot script fix while it runs |
+| 26–28 Oct | Phase 4: export env + single-model export test; decide phone vs laptop-proxy |
+| 29 Oct – 1 Nov | Phase 5: PlantVillage download, grouped split, overnight runs |
+| 2–4 Nov | Phase 4: export all models, benchmark; Phase 3 final figures |
+| 5–8 Nov | Report draft |
+| 9–10 Nov | Report final, GitHub push, backups (**personal target**) |
+| 11–20 Nov | Buffer only (re-runs, fixes). Submit before 20 Nov |
+
+If a phase slips: Phase 6 is dropped first, then the from-scratch redo, then PlantVillage seeds. Never drop Phase 4 or Phase 7.
+
+## 6. Commands
+
+```powershell
+# Phase 2 (resumable: run again after any interruption)
+powershell -ExecutionPolicy Bypass -File scripts\queue_v2_exp4.ps1
+# Phase 2 optional seeds
+.\.venv\Scripts\python.exe -u scripts/queue_v2_exp4.py --seeds
+# Dry run (prints commands, trains nothing)
+.\.venv\Scripts\python.exe -u scripts/queue_v2_exp4.py --dry-run
+```
+
+Logs: `D:\kd-project\logs\`. Checkpoints: `D:\kd-project\runs_v2\<run_name>\best.pt`, `last.pt`.
+
+## 7. Hardware, storage, security
+
+- RTX 4050 6 GB (use AMP), i7-13620H, 16 GB RAM; data + checkpoints on D:. Laptop plugged in, sleep off, cooling pad, Windows Update paused while training.
+- Git holds code, configs, `results/*.csv`, figures, report (<60 MB). Checkpoints, datasets, `.onnx`, `.tflite` stay out (`.gitignore`).
+- Never commit Kaggle key or Hugging Face token (`.env`, `kaggle.json`, `*token*.txt` are ignored).
+- Stop anytime with `Ctrl+C`; restart with `--resume` / re-run the queue — loses at most 1 epoch.
+
+## 8. Risks
+
+| Risk | Mitigation |
+|---|---|
+| TFLite export fails on Windows | Test early (Phase 4); fall back to `onnx2tf` / `ai-edge-torch` / Colab / WSL |
+| No Android phone | Laptop CPU latency as an explicitly-labelled proxy |
+| PlantVillage leakage | Grouped split before any training |
+| KD gains within noise (≈ 0.3–1 pp) | Report full grid, add seeds where possible, keep claims modest |
+| Laptop sleep / thermal throttling / updates | Settings in section 7, resumable queues |
+| GitHub 100 MB limit | Checkpoints never in git |
+
+## 9. Report outline
+
+1. Introduction · 2. Related work (Hinton 2015, MobileNetV2) · 3. Method (KD loss, T, α)
+4. Experimental setup (datasets, v2 train/val/test protocol, models, recipes, hardware)
+5. Results: teacher vs baseline vs KD (accuracy, size, latency); T × α heatmap; accuracy-vs-size Pareto (baseline vs KD); KD gain vs width; pretrained vs from-scratch; CIFAR-100 vs PlantVillage; on-device table
+6. Discussion — *when does KD help the most?* (including honest limits: small gains, seed noise, single common T/α, v1→v2 protocol change)
+7. Conclusion · 8. References
+
+## 10. Repository layout (actual)
+
+```
+configs/   teacher.yaml, student.yaml, kd.yaml
+src/       data.py, models.py, kd_loss.py, train.py, evaluate.py, utils.py
+scripts/   train/queue: queue_v2_night1.py|.ps1, queue_v2_exp4.py|.ps1   (v2, current)
+           history  : queue_night3, queue_exp4, queue_seeds, sweep*, overnight_night1, pretrained_baselines (v1)
+           tools    : plot_results.py, export.py, benchmark.py
+results/   results_v2.csv, best_recipes_v2.csv, best_config_v2.json, kd_gain_v2.csv (after Phase 2),
+           results.csv + quick_tests.csv (v1 history), figures/
+report/    report.pdf (to do)
+notebooks/ optional
+```
