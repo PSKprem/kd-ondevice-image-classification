@@ -80,8 +80,10 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [ ] Laptop CPU latency may be added as an extra column, clearly labelled as a proxy (not the main on-device number)
 
 ### Phase 5 — PlantVillage (smaller study) ⏳
-- [ ] Kaggle account + API key (never commit `kaggle.json`), download PlantVillage (~1–2 GB) to `D:\kd-project\data\plantvillage`
-- [ ] **Implement `_build_plantvillage` in `src/data.py`** (currently raises `NotImplementedError`). Needs a *grouped* train/val/test split (all photos of one leaf in the same split), otherwise results leak
+- [x] Kaggle account + legacy API key (`C:\Users\Victus\.kaggle\kaggle.json`, never commit); kaggle CLI 2.2.5 in separate venv `D:\kd-project\.venv-kaggle`
+- [x] Downloaded `abdallahalidev/plantvillage-dataset` (2.04 GB zip) and extracted ONLY `color/` to `D:\kd-project\data\plantvillage_raw\plantvillage dataset\color`: 38 classes, 54,305 images (152 to 5,507 per class). Config still points to `D:/kd-project/data/plantvillage` -> set `plantvillage_dir` to the `color` folder
+- Finding: filenames are `<uuid>___<code>.JPG` (or `<code>.JPG`); the code is a per-image id (53,091 unique codes), so **leaf identity is not in the filename** -> exact per-leaf grouping is impossible. Plan: block split (consecutive ids within a class go to the same split); say in the report that it is approximate
+- [ ] **Implement `_build_plantvillage` in `src/data.py`** (currently raises `NotImplementedError`) with the block split above, otherwise results may leak
 - [ ] Runs (≈5): teacher ResNet-50 + MBV2 w0.5 and w1.0, each baseline and KD (T2, α0.9, same recipes as CIFAR-100; recipe not re-tuned — state this)
 - [ ] Expect accuracy near ceiling (~99%) → small KD gain; report honestly
 
