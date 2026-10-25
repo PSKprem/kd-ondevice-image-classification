@@ -64,7 +64,7 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 ### Phase 2 — KD on every student (Pareto data) ✅
 - [x] `scripts\queue_v2_exp4.ps1` finished 25 Oct (2.1 h, 7 runs, no failures): KD (T2, α0.9) on w0.5 / w1.4 / MBV3-S + alpha probe (α 0.1, 0.5 at T2 on w0.5 and w1.4; discussion only). Files: `results/kd_gain_v2.csv`, `results/alpha_probe_v2.csv`
 - Alpha probe (test gain vs baseline, pp, single seed; α = 0.1 / 0.5 / 0.9): w0.5 +0.32 / +0.40 / +0.45 · w1.0 +0.52 / +1.06 / +0.85 · w1.4 +0.28 / +1.53 / +1.25. α = 0.5 is slightly better than the common α = 0.9 on w1.0 and w1.4 (val agrees: w1.4 +1.04 vs +1.00), but the 0.2–0.3 pp difference is within noise; α = 0.1 is clearly weakest on the larger students; w0.5 is flat and small. Decision stays: common T2 / α0.9 (mention as a limitation)
-- [ ] Optional: `python scripts/queue_v2_exp4.py --seeds` → seeds 0, 1 for baseline + KD on w0.5, w1.0 (~1.7 h) to show gain vs seed noise
+- [x] Seed check done 25 Oct (`scripts\queue_v2_seeds.ps1`, 8 runs, 1.9 h): seeds 42 / 0 / 1 on w0.5 and w1.0. Baseline vs KD test (mean ± std): w0.5 74.71 ± 0.16 -> 75.17 ± 0.15 (gain +0.46; per seed +0.45 / +0.44 / +0.49); w1.0 80.82 ± 0.07 -> 81.63 ± 0.18 (gain +0.81; per seed +0.85 / +0.89 / +0.68). Gains are small but positive for every seed and larger than seed spread (~0.1–0.2 pp) -> likely real, for these two students. This replaces the earlier v1 impression that w0.5 gains ≈ 0. w1.4 and MBV3-S remain single seed (optional: `--seeds --seed-students w1.4 mbv3s`, ~1.3 h)
 
 ### Phase 3 — Plots & tables
 - [x] `scripts/plot_results.py` rewritten for v2 and run on the final data -> `pareto_v2.png`, `kd_gain_v2.png`, `heatmap_v2.png`, `alpha_probe_v2.png`, `results/summary_table_v2.csv`

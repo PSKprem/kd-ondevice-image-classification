@@ -124,19 +124,22 @@ Phone latency is measured with TFLite `benchmark_model` through `adb` (see `scri
 | `scripts/benchmark.py` | Params / FLOPs / file size (+ on-device latency via adb) |
 | `scripts/queue_night3.*`, `queue_exp4.py`, `queue_seeds.py`, `sweep*.{py,ps1}`, `overnight_night1.ps1`, `pretrained_baselines.ps1` | v1 history (test-selected protocol); not used for headline results |
 
-## Results so far (CIFAR-100, v2, test top-1, single seed)
+## Results so far (CIFAR-100, v2, test top-1; mean over seeds where n > 1)
 
-| Model | Params (M) | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |
-|---|---|---|---|---|
-| ResNet-50 (teacher) | 23.71 | 85.46 | — | — |
-| MobileNetV2 w0.5 | 0.82 | 74.58 | 75.03 | +0.45 |
-| MobileNetV3-Small | 1.62 | 78.34 | 80.02 | +1.68 |
-| MobileNetV2 w1.0 | 2.35 | 80.86 | 81.71 | +0.85 |
-| MobileNetV2 w1.4 | 4.50 | 82.36 | 83.61 | +1.25 |
+| Model | Params (M) | Seeds | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |
+|---|---|---|---|---|---|
+| ResNet-50 (teacher) | 23.71 | 1 | 85.46 | — | — |
+| MobileNetV2 w0.5 | 0.82 | 3 | 74.71 ± 0.16 | 75.17 ± 0.15 | +0.46 |
+| MobileNetV3-Small | 1.62 | 1 | 78.34 | 80.02 | +1.68 |
+| MobileNetV2 w1.0 | 2.35 | 3 | 80.82 ± 0.07 | 81.63 ± 0.18 | +0.81 |
+| MobileNetV2 w1.4 | 4.50 | 1 | 82.36 | 83.61 | +1.25 |
 
-Gains are small (about 0.5–1.7 pp) and from one seed; differences of this size can be seed noise, so they are
-indicative only. The gain also grows with width inside MobileNetV2, but optimizer (AdamW for w0.5 / MBV3-S, SGD for
-w1.0 / w1.4, each chosen on val) and architecture are mixed with size, so size alone cannot be credited. The final tables and figures are produced by `scripts/plot_results.py`
+Per-seed paired gains (seeds 42 / 0 / 1): w0.5 +0.45 / +0.44 / +0.49, w1.0 +0.85 / +0.89 / +0.68, i.e. small but
+positive for every seed. w1.4 and MobileNetV3-Small are still single-seed. The gain grows with width inside
+MobileNetV2, but optimizer (AdamW for w0.5 / MBV3-S, SGD for w1.0 / w1.4, each chosen on val) and architecture are
+mixed with size, so size alone cannot be credited. The final tables and figures are produced by
+`scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency and PlantVillage
+results are still to come (see `task.md`). The final tables and figures are produced by `scripts/plot_results.py`
 (`results/summary_table_v2.csv`, `results/figures/`). On-device latency and PlantVillage results are still to come
 (see `task.md`).
 

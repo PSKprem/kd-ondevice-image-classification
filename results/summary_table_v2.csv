@@ -1,6 +1,6 @@
 model,params_m,recipe,n_seeds,baseline_test,kd_test,kd_gain_pp,gain_std_pp
 ResNet-50 (teacher),23.71,sgd0.01,1,85.46,,,
-MBV2 w0.5,0.82,adamw1e-3,1,74.58,75.03,+0.45,0.00
+MBV2 w0.5,0.82,adamw1e-3,3,74.71,75.17,+0.46,0.03
 MBV3-Small,1.62,adamw1e-3,1,78.34,80.02,+1.68,0.00
-MBV2 w1.0,2.35,sgd0.01,1,80.86,81.71,+0.85,0.00
+MBV2 w1.0,2.35,sgd0.01,3,80.82,81.63,+0.81,0.11
 MBV2 w1.4,4.50,sgd0.01,1,82.36,83.61,+1.25,0.00
