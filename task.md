@@ -75,8 +75,9 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [ ] Export test on ONE model (w1.0 KD checkpoint): PyTorch → ONNX → TFLite FP32 → INT8. Check exported accuracy ≈ PyTorch accuracy
 - [ ] Export 4 student architectures (KD checkpoints; baseline and KD have identical size/latency, only accuracy differs; check INT8 accuracy for both) + teacher FP32 for reference
 - [ ] Per model record: file size (MB), params, FLOPs, median latency (ms, ~100 runs), accuracy of exported model
-- [ ] Phone: Android platform-tools (adb), USB debugging, `benchmark_model` via `scripts/benchmark.py` — **needs an Android phone**
-- [ ] If no phone: measure CPU latency on the laptop (TFLite / onnxruntime) and label it clearly as a *proxy*, not on-device
+- [ ] Phone: Android phone **available, USB debugging already ON** (user confirmed 25 Oct). Still to do: install Android platform-tools (`adb` is not installed on the laptop yet), check `adb devices` shows the phone (accept the RSA prompt), push TFLite `benchmark_model` binary, run via `scripts/benchmark.py`
+- [ ] Record phone model, Android version, CPU, threads used and whether XNNPACK / GPU delegate is on (needed for the report's latency table)
+- [ ] Laptop CPU latency may be added as an extra column, clearly labelled as a proxy (not the main on-device number)
 
 ### Phase 5 — PlantVillage (smaller study) ⏳
 - [ ] Kaggle account + API key (never commit `kaggle.json`), download PlantVillage (~1–2 GB) to `D:\kd-project\data\plantvillage`
@@ -100,7 +101,7 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 | Dates | Plan |
 |---|---|
 | 25 Oct | Phase 2 (start queue, ~50 min) + Phase 3 plot script fix while it runs |
-| 26–28 Oct | Phase 4: export env + single-model export test; decide phone vs laptop-proxy |
+| 26–28 Oct | Phase 4: install adb + check phone connection, export env + single-model export test, first latency on the phone |
 | 29 Oct – 1 Nov | Phase 5: PlantVillage download, grouped split, overnight runs |
 | 2–4 Nov | Phase 4: export all models, benchmark; Phase 3 final figures |
 | 5–8 Nov | Report draft |
@@ -134,7 +135,7 @@ Logs: `D:\kd-project\logs\`. Checkpoints: `D:\kd-project\runs_v2\<run_name>\best
 | Risk | Mitigation |
 |---|---|
 | TFLite export fails on Windows | Test early (Phase 4); fall back to `onnx2tf` / `ai-edge-torch` / Colab / WSL |
-| No Android phone | Laptop CPU latency as an explicitly-labelled proxy |
+| `benchmark_model` binary / adb setup problems | Install platform-tools early; test with any small .tflite first |
 | PlantVillage leakage | Grouped split before any training |
 | KD gains within noise (≈ 0.3–1 pp) | Report full grid, add seeds where possible, keep claims modest |
 | Laptop sleep / thermal throttling / updates | Settings in section 7, resumable queues |
