@@ -56,6 +56,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--results-csv", type=str, default=None, help="override results CSV path")
     p.add_argument("--seed", type=int, default=None, help="override random seed")
     p.add_argument("--dataset", type=str, default=None, help="override dataset (cifar100 | plantvillage)")
+    p.add_argument("--train-fraction", type=float, default=None,
+                   help="low-data study: use this fraction of the CIFAR-100 train split (stratified, nested)")
     p.add_argument("--plantvillage-dir", type=str, default=None,
                    help="override PlantVillage 'color' folder (one sub-folder per class)")
     p.add_argument("--run-name", type=str, default=None, help="override run_name")
@@ -155,6 +157,7 @@ def main() -> None:
         "results_csv": args.results_csv,
         "seed": args.seed,
         "dataset": args.dataset,
+        "train_fraction": args.train_fraction,
         "plantvillage_dir": args.plantvillage_dir,
     })
     if args.no_pretrained:

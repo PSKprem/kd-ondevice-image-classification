@@ -76,6 +76,23 @@ def stratified_split_indices(targets, val_per_class: int, split_seed: int):
     return sorted(train_idx), sorted(val_idx)
 
 
+def stratified_fraction(targets, train_idx, fraction: float, split_seed: int):
+    """Keep `fraction` of the train split, same share per class (low-data study).
+
+    Deterministic given (targets, train_idx, split_seed) and NESTED: the 10% subset is contained in the 25% one
+    (same per-class permutation, first k kept). Independent of the training seed, so baseline and KD see the same images.
+    """
+    targets = np.asarray(targets)
+    train_idx = np.asarray(train_idx)
+    rng = np.random.RandomState(split_seed + 1)
+    kept = []
+    for c in np.unique(targets[train_idx]):
+        cls = train_idx[targets[train_idx] == c]
+        order = rng.permutation(len(cls))
+        kept.extend(cls[order[:max(1, int(round(fraction * len(cls))))]].tolist())
+    return sorted(kept)
+
+
 def _select(dataset, idx):
     """Copy of a torchvision CIFAR dataset keeping only `idx` (small to pickle for workers)."""
     out = copy.copy(dataset)
@@ -112,6 +129,10 @@ def _build_cifar100(cfg: dict, smoke_test: bool):
         int(cfg.get("val_per_class", VAL_PER_CLASS_DEFAULT)),
         int(cfg.get("split_seed", SPLIT_SEED_DEFAULT)),
     )
+    fraction = float(cfg.get("train_fraction", 1.0))
+    if fraction < 1.0:  # low-data study: nested, stratified subset of the 45k train split (val/test untouched)
+        train_idx = stratified_fraction(full_train_view.targets, train_idx, fraction,
+                                        int(cfg.get("split_seed", SPLIT_SEED_DEFAULT)))
     train_set = _select(full_train_view, train_idx)
     val_set = _select(full_eval_view, val_idx)
 
