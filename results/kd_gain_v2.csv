@@ -1,0 +1,5 @@
+student,recipe,params_m,n_seeds,baseline_test_mean,baseline_test_std,kd_test_mean,kd_test_std,kd_gain_pp,T,alpha
+w0.5,adamw1e-3,0.816,1,74.58,0.00,75.03,0.00,+0.45,2.0,0.9
+w1.0,sgd0.01,2.352,1,80.86,0.00,81.71,0.00,+0.85,2.0,0.9
+w1.4,sgd0.01,4.495,1,82.36,0.00,83.61,0.00,+1.25,2.0,0.9
+mbv3s,adamw1e-3,1.620,1,78.34,0.00,80.02,0.00,+1.68,2.0,0.9

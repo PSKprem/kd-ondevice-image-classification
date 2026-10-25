@@ -115,6 +115,7 @@ def plot_pareto(summ, teacher, T, a, out: Path) -> None:
     plt.xlabel("student params (M)")
     plt.ylabel("CIFAR-100 test top-1 (%)")
     plt.title("Accuracy vs model size: baseline vs KD")
+    plt.margins(x=0.1)
     plt.legend(loc="lower right")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()

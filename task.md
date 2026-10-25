@@ -61,13 +61,14 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [x] Full T × α grid on w1.0 (12 runs) → `results/best_config_v2.json`, `results/figures/heatmap_v2.png`
 - [x] v1 experiments (history only): sweep on w0.5, recipe / label-smoothing / seed checks, from-scratch w0.35 / 0.5 / 0.75
 
-### Phase 2 — KD on every student (Pareto data) ⏳ NEXT
-- [ ] Run `scripts\queue_v2_exp4.ps1` → KD (T2, α0.9) on w0.5, w1.4, MBV3-S (~50 min). Writes `results/kd_gain_v2.csv`
+### Phase 2 — KD on every student (Pareto data) ✅
+- [x] `scripts\queue_v2_exp4.ps1` finished 25 Oct (2.1 h, 7 runs, no failures): KD (T2, α0.9) on w0.5 / w1.4 / MBV3-S + alpha probe (α 0.1, 0.5 at T2 on w0.5 and w1.4; discussion only). Files: `results/kd_gain_v2.csv`, `results/alpha_probe_v2.csv`
+- Alpha probe (test gain vs baseline, pp, single seed; α = 0.1 / 0.5 / 0.9): w0.5 +0.32 / +0.40 / +0.45 · w1.0 +0.52 / +1.06 / +0.85 · w1.4 +0.28 / +1.53 / +1.25. α = 0.5 is slightly better than the common α = 0.9 on w1.0 and w1.4 (val agrees: w1.4 +1.04 vs +1.00), but the 0.2–0.3 pp difference is within noise; α = 0.1 is clearly weakest on the larger students; w0.5 is flat and small. Decision stays: common T2 / α0.9 (mention as a limitation)
 - [ ] Optional: `python scripts/queue_v2_exp4.py --seeds` → seeds 0, 1 for baseline + KD on w0.5, w1.0 (~1.7 h) to show gain vs seed noise
 
 ### Phase 3 — Plots & tables
-- [x] `scripts/plot_results.py` rewritten for v2 (reads `results_v2.csv` + `best_config_v2.json`; tested on partial data). Run `python scripts/plot_results.py` AFTER the Phase 2 queue finishes -> `pareto_v2.png`, `kd_gain_v2.png`, `heatmap_v2.png`, `alpha_probe_v2.png`, `results/summary_table_v2.csv`
-- [ ] Figures: Pareto (test acc vs params, baseline vs KD, + teacher), KD gain vs width, T × α heatmap (have), student-vs-teacher table
+- [x] `scripts/plot_results.py` rewritten for v2 and run on the final data -> `pareto_v2.png`, `kd_gain_v2.png`, `heatmap_v2.png`, `alpha_probe_v2.png`, `results/summary_table_v2.csv`
+- [x] Figures: Pareto (test acc vs params, baseline vs KD, + teacher), KD gain vs width, T × α heatmap, alpha probe, summary table
 - [ ] Optional: from-scratch vs pretrained comparison redone on v2 (v1 numbers exist)
 
 ### Phase 4 — On-device measurement (core of the problem statement) ⏳ do EARLY
@@ -76,7 +77,8 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - Pipeline: `export.py --onnx-only` -> `onnx2tf -i model.onnx -o dir -b 1` -> `quantize_tflite.py` -> `eval_tflite.py`. Test artifacts in `D:\kd-project\export\test_w1.0\`
 - [ ] Export 4 student architectures (KD checkpoints; baseline and KD have identical size/latency, only accuracy differs; check INT8 accuracy for both) + teacher FP32 for reference
 - [ ] Per model record: file size (MB), params, FLOPs, median latency (ms, ~100 runs), accuracy of exported model
-- [x] Phone: Android phone available, USB debugging ON; platform-tools installed at `D:\Downloads\platform-tools-latest-windows\platform-tools\adb.exe` (not on PATH), phone connection checked by user (25 Oct)\n- [ ] Still to do: push TFLite `benchmark_model` binary to the phone, run via `scripts/benchmark.py` (pass the adb path or add it to PATH)
+- [x] Phone: Android phone available, USB debugging ON; platform-tools installed at `D:\Downloads\platform-tools-latest-windows\platform-tools\adb.exe` (not on PATH), phone connection checked by user (25 Oct)
+- [ ] Still to do (user will say when): push TFLite `benchmark_model` binary to the phone, run via `scripts/benchmark.py` (pass the adb path or add it to PATH)
 - [ ] Record phone model, Android version, CPU, threads used and whether XNNPACK / GPU delegate is on (needed for the report's latency table)
 - [ ] Laptop CPU latency may be added as an extra column, clearly labelled as a proxy (not the main on-device number)
 
@@ -139,7 +141,7 @@ Logs: `D:\kd-project\logs\`. Checkpoints: `D:\kd-project\runs_v2\<run_name>\best
 |---|---|
 | TFLite export fails on Windows | Test early (Phase 4); fall back to `onnx2tf` / `ai-edge-torch` / Colab / WSL |
 | `benchmark_model` binary / adb setup problems | Install platform-tools early; test with any small .tflite first |
-| PlantVillage leakage | Grouped split before any training |
+| PlantVillage leakage | No leaf id available -> block split of consecutive ids (approximate); state as a limitation |
 | KD gains within noise (≈ 0.3–1 pp) | Report full grid, add seeds where possible, keep claims modest |
 | Laptop sleep / thermal throttling / updates | Settings in section 7, resumable queues |
 | GitHub 100 MB limit | Checkpoints never in git |
