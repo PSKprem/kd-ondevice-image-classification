@@ -7,7 +7,8 @@ answer: *When does Knowledge Distillation help the most?*
 - **Team 25 / Section B** — Shivang Dubey (su-24137), Moirangthem Joel Singh (su-24080), Rajiv Kumar (su-24109), Prem Shankar Kushawaha (su-24100). The implementation and experiments in this repository were carried out by a single member.
 - **Datasets:** CIFAR-100 (main), PlantVillage (smaller second study)
 - **References:** Hinton et al. 2015 ([arXiv:1503.02531](https://arxiv.org/abs/1503.02531)), Sandler et al. CVPR 2018 ([arXiv:1801.04381](https://arxiv.org/abs/1801.04381))
-- Project plan and live status: [`task.md`](task.md) · brief: [`project.md`](project.md)
+- Project plan and live status: [`task.md`](task.md) · brief: [`project.md`](project.md) · report: [`report/report.pdf`](report/report.pdf)
+- **Final models** (PyTorch `safetensors` + TFLite FP32 / INT8-mixed, 4 distilled students + teacher): [huggingface.co/Premshankark88/p25-kd-mobilenet-cifar100](https://huggingface.co/Premshankark88/p25-kd-mobilenet-cifar100) (private for now)
 
 ## KD loss (Hinton 2015)
 

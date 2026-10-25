@@ -13,10 +13,10 @@ Every requirement of the project sheet is met (see report Section 2.4). What is 
 | 1 | Proof-read `report/report.pdf` | user | **Yes** |
 | 2 | Decide how the grader gets access to the **private** GitHub repo (make public or invite) | user | **Yes** |
 | 3 | Add roll numbers / course info to the report if the submission form asks for them | user (tell the agent) | Only if asked |
-| 4 | Back up checkpoints (`D:\kd-project\runs_v2`, 65 run folders) and `.tflite` files (`D:\kd-project\export`) to OneDrive / Drive | user | Recommended |
+| 4 | Back up checkpoints (`D:\kd-project\runs_v2`, 65 run folders) and `.tflite` files (`D:\kd-project\export`) to Google Drive. **Final models already on Hugging Face** (see Phase 7) | user (then give the agent the Drive link) | Recommended |
 | 5 | Phone: Developer options -> "Revoke USB debugging authorizations" | user | Recommended (security) |
 | 6 | README check from a clean clone (do the commands work?) | agent, ~15 min | Optional |
-| 7 | FLOPs per model; laptop CPU latency as a proxy column; seeds for the single-seed side experiments; Hugging Face upload | agent | Optional (not required by the sheet) |
+| 7 | FLOPs per model; laptop CPU latency as a proxy column; seeds for the single-seed side experiments | agent | Optional (not required by the sheet) |
 
 ## 1. Summary
 
@@ -125,9 +125,9 @@ PlantVillage saturated (~99 %), no clear effect (+0.05 / +0.31).
 - [ ] **Proof-read the report** (user)
 - [ ] **Grader access to the private repo** (user decision: make public or invite)
 - [ ] Roll numbers / course info in the report, only if the submission form needs them
-- [ ] Backup of checkpoints + `.tflite` to OneDrive / Drive (user)
+- [x] Hugging Face (26 Oct): final models uploaded to https://huggingface.co/Premshankark88/p25-kd-mobilenet-cifar100 (**private**): 4 distilled students + teacher, each `model.safetensors` (weights only, verified identical to `best.pt`), `config.json`, `model_fp32.tflite`, `model_int8_mixed.tflite` (students), plus `classes.json` and a model card. 263 MiB, 21 files; remote sizes verified, 2 files re-downloaded with matching SHA-256. Built by `scripts/prepare_hf_upload.py`, uploaded by `scripts/upload_hf.py` (`--public` to create public). Make it public together with the GitHub repo if the grader needs access
+- [ ] Backup of all checkpoints + `.tflite` to Google Drive (user), then add the Drive link to README / report
 - [ ] *Optional:* README check from a clean clone
-- [ ] *Optional:* upload best checkpoints + `.tflite` to Hugging Face / GitHub Release
 
 ## 5. Timeline
 
