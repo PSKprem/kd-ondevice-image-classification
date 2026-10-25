@@ -1,7 +1,22 @@
 # P25 — Task Plan: Knowledge Distillation for On-Device Image Classification
 
-> Brief: `project.md` · How to run: `README.md` · Last updated: 25 Oct 2026
-> **Working alone** (the 4-member team split of the original plan is not used; say this honestly in the report).
+> Brief: `project.md` (mirrors the official project sheet) · How to run: `README.md` · Report: `report/report.pdf` · Last updated: 26 Oct 2026
+> **Working alone** (the 4-member team split of the original plan is not used; the report says this honestly).
+
+## 0. Current status (read this first)
+
+**All experiments, the export, the phone benchmark, the report (`report/report.md` + `report/report.pdf`) and the GitHub push are DONE.**
+Every requirement of the project sheet is met (see report Section 2.4). What is left is review and delivery only:
+
+| # | Remaining task | Who | Needed? |
+|---|---|---|---|
+| 1 | Proof-read `report/report.pdf` | user | **Yes** |
+| 2 | Decide how the grader gets access to the **private** GitHub repo (make public or invite) | user | **Yes** |
+| 3 | Add roll numbers / course info to the report if the submission form asks for them | user (tell the agent) | Only if asked |
+| 4 | Back up checkpoints (`D:\kd-project\runs_v2`, 65 run folders) and `.tflite` files (`D:\kd-project\export`) to OneDrive / Drive | user | Recommended |
+| 5 | Phone: Developer options -> "Revoke USB debugging authorizations" | user | Recommended (security) |
+| 6 | README check from a clean clone (do the commands work?) | agent, ~15 min | Optional |
+| 7 | FLOPs per model; laptop CPU latency as a proxy column; seeds for the single-seed side experiments; Hugging Face upload | agent | Optional (not required by the sheet) |
 
 ## 1. Summary
 
@@ -10,42 +25,47 @@
 | Project ID / Team | P25 / Section B, Team 25 |
 | Goal | Compress a ResNet-50 teacher into a small MobileNet student that runs on a phone with minimal accuracy loss |
 | Research question | **When does Knowledge Distillation help the most?** (accuracy-vs-model-size Pareto curve) |
-| Datasets | CIFAR-100 (main), PlantVillage (second, smaller study) |
-| Deliverables | Project Report + GitHub repo (1 per group) |
+| Datasets | CIFAR-100 (main), PlantVillage (second, smaller study). The sheet says "CIFAR-100 **or** PlantVillage"; both were done |
+| Deliverables | Project Report + GitHub repo (1 per group) — both exist |
 | **Deadline** | **20 Nov 2026, 11:59 PM IST** |
-| Personal target | Finish by **10 Nov** (≈10 days buffer) |
+| Personal target | Finish by **10 Nov** |
 | References | Hinton et al. 2015 (arXiv:1503.02531), Sandler et al. CVPR 2018 (arXiv:1801.04381) |
 
 ## 2. Decisions that are FINAL (do not re-debate)
 
 | Topic | Decision |
 |---|---|
-| Approach | Transfer learning (ImageNet-pretrained), 128 px, 20 epochs, AMP. From-scratch only as a small side comparison |
+| Approach | Transfer learning (ImageNet-pretrained), 128 px, 20 epochs, AMP. From-scratch only as a side comparison |
 | Protocol (v2) | CIFAR-100 train 50k → **45k train / 5k val** (fixed `split_seed 42`). Best epoch + recipe chosen on **val**; the 10k **test** set is only reported (`test_top1` = headline) |
 | v1 results (`results/results.csv`) | Picked best epoch on test → optimistic. **History only; never use for headline numbers** |
 | Teacher | ResNet-50, SGD lr 0.01, label smoothing 0 |
-| Students | MobileNetV2 width 0.5 / 1.0 / 1.4 and MobileNetV3-Small (extra point for the Pareto curve). All pretrained |
+| Students | MobileNetV2 width 0.5 / 1.0 / 1.4 and MobileNetV3-Small. All pretrained |
 | Recipe per student (chosen on val) | w0.5 → AdamW 1e-3 · w1.0 → SGD 0.01 · w1.4 → SGD 0.01 · MBV3-S → AdamW 1e-3 |
-| KD setting | **One common setting T = 2, α = 0.9 for all students** (see reason below) |
+| KD setting | **One common setting T = 2, α = 0.9 for all students** |
 | Fairness | Baseline vs KD: same seed, augmentation, epochs, recipe, starting weights |
+| Final INT8 recipe | **Mixed**: depthwise convs float32, other convs + classifier int8 (plain dynamic INT8 breaks w0.5 / MBV3-S) |
 
-Why T = 2, α = 0.9 for all: on the w1.0 grid its val score is 81.52 vs best 81.86 (difference is within noise; val SE ≈ 0.55 pp);
-it does no harm on w0.5 (AdamW); it gave +1.7 … +2.0 pp on w1.4 / MBV3-S in v1.
-The full 12-cell grid (T ∈ {1,2,4,8} × α ∈ {0.1,0.5,0.9}) on w1.0 is reported as the T × α heatmap; the differences between neighbouring cells are near seed noise, so claims must stay modest.
+Why T = 2, α = 0.9 for all: on the w1.0 grid its val score is 81.52 vs best 81.86 (within noise; val SE ≈ 0.55 pp);
+high-T / high-α settings hurt the small w0.5 in v1. The full 12-cell grid is reported as the T × α heatmap; neighbouring cells differ by noise only.
 
-## 3. Results so far (CIFAR-100, v2, `results/results_v2.csv`)
+## 3. Final results (details and caveats in the report)
 
-| Model | Params (M) | Recipe | val top-1 | **test top-1** |
+**CIFAR-100, test top-1, mean ± std over 3 seeds (42 / 0 / 1), KD T = 2, α = 0.9** (`results/kd_gain_v2.csv`)
+
+| Model | Params (M) | Baseline | KD | Gain (pp) |
 |---|---|---|---|---|
-| ResNet-50 teacher | 23.71 | SGD 0.01 | 86.06 | **85.46** |
-| MBV2 w0.5 (baseline) | 0.82 | AdamW | 74.90 | **74.58** |
-| MBV2 w1.0 (baseline) | 2.35 | SGD | 80.74 | **80.86** |
-| MBV2 w1.4 (baseline) | 4.50 | SGD | 82.58 | **82.36** |
-| MBV3-Small (baseline) | 1.62 | AdamW | 78.32 | **78.34** |
-| MBV2 w1.0 + KD (T2, α0.9) | 2.35 | SGD | 81.52 | **81.71** (+0.85) |
+| ResNet-50 teacher (1 seed) | 23.71 | 85.46 | — | — |
+| MBV2 w0.5 (AdamW) | 0.82 | 74.71 ± 0.16 | 75.17 ± 0.15 | +0.46 |
+| MBV3-Small (AdamW) | 1.62 | 78.24 ± 0.26 | 79.77 ± 0.50 | +1.53 |
+| MBV2 w1.0 (SGD) | 2.35 | 80.82 ± 0.07 | 81.63 ± 0.18 | +0.81 |
+| MBV2 w1.4 (SGD) | 4.50 | 82.36 ± 0.02 | 84.06 ± 0.40 | +1.70 |
 
-KD (T2, α0.9) results: w0.5 test 75.03 (+0.45), MBV3-S 80.02 (+1.68), w1.0 81.71 (+0.85), w1.4 83.61 (+1.25) — single seed, `results/kd_gain_v2.csv`. Gain is small and may be seed noise (w0.5 val gain is only +0.10; w1.0 +0.78 is borderline vs val noise ~0.55; w1.4 and MBV3-S gain >1 pp on both val and test are probably real). Within MobileNetV2 the gain rises with width (+0.45 -> +0.85 -> +1.25), but this is **confounded with the optimizer** (w0.5 and MBV3-S use AdamW, w1.0 and w1.4 use SGD, each chosen on val) and MBV3-S is a different architecture, so "gain depends only on size" must NOT be claimed. Partial de-confounding: in v1 all four students used AdamW and showed the same pattern (w0.5 ~0, w1.0 +1.4, w1.4 +2.0, MBV3-S +1.7; test-selected protocol, so optimistic). Put the optimizer/architecture confound in the report's Limitations. Single seed -> confirm with extra seeds (`--seeds`) before claiming it.
-Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds), ≈ +1.4 on w1.0, ≈ +2.0 on w1.4, ≈ +1.7 on MBV3-S → gain seems to grow with student size. Must be re-confirmed on v2.
+Gain is positive for every student and every seed. Side experiments (single seed): from scratch +2.50 / +5.60 pp (w0.5 / w1.0);
+optimizer swap shows the width trend also with AdamW only (+0.45 / +1.07 / +1.87); low-data mixed (w1.0 +2.03 at 25 %, w0.5 −0.22 at 10 %);
+PlantVillage saturated (~99 %), no clear effect (+0.05 / +0.31).
+
+**On the phone** (Samsung Galaxy F22, 1 thread, median of 3): distilled w1.0 INT8-mixed = 2.62 MiB, 18.0 ms, 81.78 % vs teacher FP32 = 90.39 MiB, 225.4 ms, 85.46 %
+→ **34× smaller, 12.5× faster, −3.7 pp**.
 
 ## 4. Status checklist
 
@@ -53,120 +73,121 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [x] venv (Python 3.12.5), torch 2.5.1+cu121 (CUDA OK on RTX 4050), timm, pandas, matplotlib, pyyaml, thop; `huggingface_hub` pinned 0.26.2
 - [x] `src/` (data, models, kd_loss, train, evaluate, utils) and `scripts/` written, smoke test passed
 - [x] CIFAR-100 in `D:\kd-project\data`
-- [x] Git: v2 code + results committed (history: `5a8b8f4`, `93796a2`, `2fedcba`)
 
 ### Phase 1 — CIFAR-100 v2: teacher, baselines, T × α sweep ✅
-- [x] Teacher ResNet-50 (v2)
+- [x] Teacher ResNet-50 (v2): val 86.06 / test 85.46
 - [x] 8 baselines (4 students × SGD / AdamW) → `results/best_recipes_v2.csv`
 - [x] Full T × α grid on w1.0 (12 runs) → `results/best_config_v2.json`, `results/figures/heatmap_v2.png`
 - [x] v1 experiments (history only): sweep on w0.5, recipe / label-smoothing / seed checks, from-scratch w0.35 / 0.5 / 0.75
 
 ### Phase 2 — KD on every student (Pareto data) ✅
-- [x] `scripts\queue_v2_exp4.ps1` finished 25 Oct (2.1 h, 7 runs, no failures): KD (T2, α0.9) on w0.5 / w1.4 / MBV3-S + alpha probe (α 0.1, 0.5 at T2 on w0.5 and w1.4; discussion only). Files: `results/kd_gain_v2.csv`, `results/alpha_probe_v2.csv`
-- Alpha probe (test gain vs baseline, pp, single seed; α = 0.1 / 0.5 / 0.9): w0.5 +0.32 / +0.40 / +0.45 · w1.0 +0.52 / +1.06 / +0.85 · w1.4 +0.28 / +1.53 / +1.25. α = 0.5 is slightly better than the common α = 0.9 on w1.0 and w1.4 (val agrees: w1.4 +1.04 vs +1.00), but the 0.2–0.3 pp difference is within noise; α = 0.1 is clearly weakest on the larger students; w0.5 is flat and small. Decision stays: common T2 / α0.9 (mention as a limitation)
-- [x] Seed check done 25 Oct (`scripts\queue_v2_seeds.ps1`, 8 runs, 1.9 h): seeds 42 / 0 / 1 on w0.5 and w1.0. Baseline vs KD test (mean ± std): w0.5 74.71 ± 0.16 -> 75.17 ± 0.15 (gain +0.46; per seed +0.45 / +0.44 / +0.49); w1.0 80.82 ± 0.07 -> 81.63 ± 0.18 (gain +0.81; per seed +0.85 / +0.89 / +0.68). Gains are small but positive for every seed and larger than seed spread (~0.1–0.2 pp) -> likely real, for these two students. This replaces the earlier v1 impression that w0.5 gains ≈ 0. w1.4 and MBV3-S remain single seed (optional: `--seeds --seed-students w1.4 mbv3s`, ~1.3 h)
-- [x] Seeds for w1.4 and MBV3-S done 25 Oct (`scripts\queue_v2_seeds.ps1 -Students "w1.4 mbv3s"`, 8 runs, 2.0 h). All four students now have 3 seeds (42 / 0 / 1). Baseline -> KD test (mean ± std): w0.5 74.71 ± 0.16 -> 75.17 ± 0.15 (+0.46) · w1.0 80.82 ± 0.07 -> 81.63 ± 0.18 (+0.81) · **w1.4 82.36 ± 0.02 -> 84.06 ± 0.40 (+1.70)** · **MBV3-S 78.24 ± 0.26 -> 79.77 ± 0.50 (+1.53)**. Per-seed paired gains are positive for every student and seed (w1.4 +1.25 / +2.02 / +1.84, MBV3-S +1.68 / +2.15 / +0.76). Within MobileNetV2 the gain grows with width (+0.46 -> +0.81 -> +1.70). `results/kd_gain_v2.csv`, figures regenerated
-- [x] Optimizer de-confound done 25 Oct (`scripts\queue_recipe_swap.ps1`, 4 KD runs, 1.1 h, single seed 42; `results/recipe_swap_v2.csv`). KD gain on test (pp), SGD / AdamW: w0.5 **+6.25** / +0.45 · w1.0 +0.85 / +1.07 · w1.4 +1.25 / +1.87 · MBV3-S +1.64 / +1.68. Findings: (1) with AdamW the gain rises monotonically with width (+0.45 -> +1.07 -> +1.87), so the width trend is not just an optimizer artefact; (2) with SGD it holds for w1.0 -> w1.4 but w0.5 is a huge outlier (+6.25) because its SGD baseline is badly under-trained (60.63 vs 74.58 with AdamW) — same lesson as from-scratch: KD helps a lot when the student baseline is weak/under-optimized; (3) MBV3-S gain is about the same under both optimizers (+1.6). Caveat: these 4 new runs are single seed
+- [x] KD (T2, α0.9) on all four students + alpha probe (α 0.1 / 0.5 at T2 on w0.5 and w1.4) — `scripts\queue_v2_exp4.ps1`, `results/kd_gain_v2.csv`, `results/alpha_probe_v2.csv`
+- Alpha probe (test gain, pp, single seed; α = 0.1 / 0.5 / 0.9): w0.5 +0.32 / +0.40 / +0.45 · w1.0 +0.52 / +1.06 / +0.85 · w1.4 +0.28 / +1.53 / +1.25. α = 0.5 slightly better than 0.9 for the larger students but within noise; decision stays T2 / α0.9 (limitation in the report)
+- [x] 3 seeds (42 / 0 / 1) for **all four** students — `scripts\queue_v2_seeds.ps1` (default w0.5 w1.0; `-Students "w1.4 mbv3s"`). Per-seed paired gains: w0.5 +0.45 / +0.44 / +0.49 · w1.0 +0.85 / +0.89 / +0.68 · w1.4 +1.25 / +2.02 / +1.84 · MBV3-S +1.68 / +2.15 / +0.76
+- [x] Optimizer de-confound — `scripts\queue_recipe_swap.ps1`, `results/recipe_swap_v2.csv` (single seed). KD gain, SGD / AdamW: w0.5 **+6.25** / +0.45 · w1.0 +0.85 / +1.07 · w1.4 +1.25 / +1.87 · MBV3-S +1.64 / +1.68. Width trend holds with AdamW alone; the w0.5 SGD outlier comes from an under-trained SGD baseline (60.63 vs 74.58)
 
-### Phase 3 — Plots & tables
-- [x] `scripts/plot_results.py` rewritten for v2 and run on the final data -> `pareto_v2.png`, `kd_gain_v2.png`, `heatmap_v2.png`, `alpha_probe_v2.png`, `results/summary_table_v2.csv`
-- [x] Figures: Pareto (test acc vs params, baseline vs KD, + teacher), KD gain vs width, T × α heatmap, alpha probe, summary table
-- [x] From-scratch vs pretrained redone on v2 (25 Oct, `scripts\queue_scratch.ps1`, 4 runs, 0.9 h; 20 epochs, same recipes/teacher/KD T2 α0.9, single seed; results `results/results_scratch_v2.csv`, `results/summary_scratch_v2.csv`). Test top-1 baseline -> KD: w0.5 47.44 -> 49.94 (**+2.50**, val +3.64) · w1.0 57.33 -> 62.93 (**+5.60**, val +5.56). Pretrained gains were +0.46 / +0.81, so **KD helps ~5-7x more without pretrained weights** — a strong, clear result (effect size far above seed spread ~0.2 pp). Caveats: single seed; 20 epochs is not converged for from-scratch (part of the KD gain may be faster learning from soft labels); w0.5 uses AdamW and w1.0 SGD (optimizer confound again)
+### Phase 3 — Plots & tables ✅
+- [x] `scripts/plot_results.py` (v2) → `pareto_v2.png`, `kd_gain_v2.png`, `heatmap_v2.png`, `alpha_probe_v2.png`, `results/summary_table_v2.csv`
+- [x] `scripts/plot_report_figures.py` → `fig_latency_pareto.png`, `fig_size_pareto.png`, `fig_lowdata.png`, `fig_scratch.png`, `fig_optimizer.png`
+- [x] From-scratch vs pretrained (v2) — `scripts\queue_scratch.ps1`, `results/summary_scratch_v2.csv` (single seed). w0.5 47.44 → 49.94 (**+2.50**) · w1.0 57.33 → 62.93 (**+5.60**). Caveat: 20 epochs not converged for scratch
 
-### Phase 4 — On-device measurement (core of the problem statement) ⏳ do EARLY
-- [x] Separate export env `D:\kd-project\.venv-export` (CPU torch, TF 2.21, onnx2tf 2.6.9, ai-edge-quantizer); `requirements-export.txt` now holds the VERIFIED versions and what failed. Training venv untouched. All downloads went to D: (pip cache `D:\kd-project\cache\pip`, temp `D:\kd-project\tmp`)
-- [x] Export test on the w1.0 KD checkpoint: PyTorch -> ONNX -> TFLite FP32 (8.95 MiB) -> INT8 dynamic (2.5 MiB) / INT8 static (2.7 MiB). CIFAR-100 test images: FP32 81.10% (n=1000, 100% agreement with PyTorch), INT8 dynamic 83.5% (n=200, 96.5% agreement), INT8 static 83.0% (n=500, 94.8% agreement). Small n -> run the full 10k test set for the final table
-- INT8 diagnosis + fix (25 Oct, `scripts/diag_quant.py`, pure PyTorch): (1) all conv weights in the TFLite files are per-channel, so granularity is not the cause; (2) fake-quantizing the weights to per-channel int8 in PyTorch reproduces the TFLite weight-only accuracy EXACTLY (w0.5 72.85, MBV3-S 79.65 on 2000 images) -> the export is correct, the loss is a property of the model; (3) BN folding makes no difference (per-channel quantization is invariant to the per-channel BN scale); (4) for w0.5 the loss comes from the depthwise layers: int8 on depthwise only = -2.60 pp, pointwise -0.55, first conv / classifier ~0 (w1.0 depthwise: -0.05); (5) MBV3-S weights are fine (weight-only 79.65) and only the dynamic mode breaks (13%), i.e. run-time activation quantization. Why w0.5's depthwise weights are so sensitive is NOT established. **Fix: mixed recipe `--mode mixed_dynamic`: depthwise convs stay float32, regular convs + FC are int8** -> w0.5 75.20 (FP32 75.75), MBV3-S 79.65 (FP32 80.30) on 2000 images, file 1.0 / 2.0 MiB. Cost: depthwise stay float, so the latency gain may be smaller than full INT8 (to be measured on the phone). Full 10k evaluation of the mixed models is added by `scripts/export_all.py`
-- [x] Export 4 student architectures (KD + baseline checkpoints) + teacher FP32 to TFLite done 25 Oct (`scripts/export_all.py`, 68 min CPU; results `results/export_eval_v2.csv`; files in `D:\kd-project\export\<run>\`). FP32 TFLite == PyTorch predictions (100% agreement on every model). INT8 dynamic on the full 10k test set (KD / baseline): w1.0 81.78 / 80.59 (PyTorch FP32 81.71 / 80.86) · w1.4 83.23 / 81.97 (83.61 / 82.36) · **w0.5 71.63 / 71.75 (PyTorch 75.03 / 74.58, -3.4 pp)** · **MBV3-S 13.14 / 9.76 (broken; PyTorch 80.02 / 78.34)**. KD advantage survives INT8 for w1.0 (+1.19) and w1.4 (+1.26). Extra variants on 2000 images (FP32 same 2000: w0.5 75.75, MBV3-S 80.30): weight-only INT8 w0.5 72.85, MBV3-S 79.65; static INT8 w0.5 69.35, MBV3-S fails to run (XNNPACK error). My hypothesis that the recipe was per-tensor was WRONG (`dynamic_wi8_afp32` is already channel-wise); the cause of the small-model / MBV3 INT8 degradation is not established. Plan for the phone: FP32 for all models, INT8 dynamic for w1.0 / w1.4 (accuracy ~ FP32), weight-only INT8 for MBV3-S, w0.5 INT8 reported together with its accuracy drop
-- [ ] Per model record: file size (MB), params, FLOPs, median latency (ms, ~100 runs), accuracy of exported model
-- [x] Phone: Android phone available, USB debugging ON; platform-tools installed at `D:\Downloads\platform-tools-latest-windows\platform-tools\adb.exe` (not on PATH), phone connection checked by user (25 Oct)
-- [x] Phone benchmark DONE 25 Oct: adb + TFLite `benchmark_model` nightly (7 Feb 2025, SHA256 `5D45116E...FABA1374`) on Samsung Galaxy F22 (SM-E225F, Android 13, MediaTek Helio G80, 8 cores, CPU + XNNPACK); 13 models x 1 / 4 threads x 3 reps (78 runs, 4.7 min, 100 runs each), temperature 32.8–33.1 °C. Files `/data/local/tmp/p25/` on the phone (still there -> clean up). Results `results/phone_latency_v2.csv`, table in README. Highlights (1 thread, ms, FP32 / mixed INT8): w0.5 10.1 / 8.7 · MBV3-S 8.5 / 7.0 · w1.0 24.1 / 18.0 · w1.4 42.3 / 29.0 · teacher FP32 225.4. Student w1.0 INT8-mixed = 34x smaller and 12.5x faster than the teacher for -3.7 pp accuracy. 4 threads help only the bigger models; plain dynamic INT8 is slower than FP32 on 4 threads
-- [x] Phone clean-up done 25 Oct: `/data/local/tmp/p25` deleted (verified: folder gone, `/data/local/tmp` empty, free space unchanged 66 GB); `adb devices` now lists no device, i.e. USB debugging is off (my last command `settings put global adb_enabled 0` was interrupted but the device is no longer visible). Still to do by the user on the phone: Developer options -> "Revoke USB debugging authorizations"
-- [ ] Record phone model, Android version, CPU, threads used and whether XNNPACK / GPU delegate is on (needed for the report's latency table)
-- [ ] Laptop CPU latency may be added as an extra column, clearly labelled as a proxy (not the main on-device number)
+### Phase 4 — Export & on-device measurement ✅
+- [x] Separate export env `D:\kd-project\.venv-export` (CPU torch, TF 2.21, onnx2tf 2.6.9, ai-edge-quantizer); verified versions + what failed in `requirements-export.txt`
+- [x] Pipeline: `export.py --onnx-only` → `onnx2tf -b 1` (FP32 .tflite) → `quantize_tflite.py` (INT8) → `eval_tflite.py` (accuracy); all models via `scripts/export_all.py` → `results/export_eval_v2.csv`
+- [x] FP32 TFLite == PyTorch predictions (100 % agreement on every model)
+- [x] INT8 diagnosis (`scripts/diag_quant.py`): conversion is correct; the w0.5 loss comes from its depthwise layers (−2.60 pp when only depthwise is int8); MBV3-S breaks only with run-time activation quantization. Cause of the depthwise sensitivity NOT established
+- [x] Fix = mixed INT8 (depthwise float32). Full 10k test set, KD / baseline: w0.5 74.67 / 74.43 · MBV3-S 79.52 / 78.04 · w1.0 81.78 / 80.48 · w1.4 83.55 / 82.26
+- [x] Phone benchmark — `scripts/phone_benchmark.py`, `results/phone_latency_v2.csv`: Samsung Galaxy F22 (SM-E225F, Android 13, MediaTek Helio G80, 8 cores), CPU + XNNPACK, TFLite `benchmark_model` nightly (7 Feb 2025, SHA256 `5D45116E...FABA1374`), 13 models × 1 / 4 threads × 3 reps, 100 timed runs each, temperature 32.8–33.1 °C
+- [x] Phone metadata (model, Android, CPU, threads, XNNPACK) recorded in the report (Sections 5.1, 7.5) and README
+- [x] Per-model numbers: parameters (report Section 4.2), file sizes + exported accuracy (Section 7.3), latency (Section 7.5), headline trade-off (Section 7.6)
+- [x] Phone clean-up: `/data/local/tmp/p25` deleted (verified), USB debugging no longer visible to adb. User still to tap "Revoke USB debugging authorizations"
+- [ ] *Optional:* FLOPs per model (not computed; the sheet asks for latency/size only)
+- [ ] *Optional:* laptop CPU latency as a clearly-labelled proxy column
 
-### Phase 5 — PlantVillage (smaller study) ✅ (runs done; optional seeds)
-- [x] Kaggle account + legacy API key (`C:\Users\Victus\.kaggle\kaggle.json`, never commit); kaggle CLI 2.2.5 in separate venv `D:\kd-project\.venv-kaggle`
-- [x] Downloaded `abdallahalidev/plantvillage-dataset` (2.04 GB zip) and extracted ONLY `color/` to `D:\kd-project\data\plantvillage_raw\plantvillage dataset\color`: 38 classes, 54,305 images (152 to 5,507 per class). Config still points to `D:/kd-project/data/plantvillage` -> set `plantvillage_dir` to the `color` folder
-- Finding: filenames are `<uuid>___<code>.JPG` (or `<code>.JPG`); the code is a per-image id (53,091 unique codes), so **leaf identity is not in the filename** -> exact per-leaf grouping is impossible. Plan: block split (consecutive ids within a class go to the same split); say in the report that it is approximate
-- [x] `_build_plantvillage` implemented in `src/data.py` (block split: per class, blocks of 20 consecutive ids go whole to train / val / test = 37,994 / 5,425 / 10,886 (70/10/20), 38 classes, no overlap, deterministic, `split_seed` 42). Extra flags `--dataset plantvillage --plantvillage-dir ...`; configs now point to the `color` folder. Smoke test passed end-to-end (38-class head). Check: adjacent ids are more similar than random same-class images (pixel diff 32 vs 39), so blocks reduce but cannot fully remove leaf leakage -> state as a limitation
-- [x] Runs (5) finished 25 Oct (`scripts\queue_pv.ps1`, 1.4 h, no failures; 20 epochs, same recipes as CIFAR-100, recipe not re-tuned): results in `results/results_pv_v2.csv`, summary `results/summary_pv_v2.csv`. Test top-1 (single seed): teacher ResNet-50 99.05 (val 98.84) · w0.5 baseline 98.72 -> KD 98.77 (+0.05; val 98.19 -> 98.43) · w1.0 baseline 98.96 -> KD 99.27 (+0.31; val 98.88 -> 99.08)
-- Interpretation (be honest in the report): the dataset is saturated (~99%). The test set has 10,886 images, so +0.05 is ~5 images (noise) and +0.31 is ~34 images (borderline, single seed). The w1.0 KD student (99.27) even beats its teacher (99.05), which together with the approximate block split (near-duplicate leakage, see above) suggests PlantVillage cannot separate the models well -> do NOT claim KD helps here; say "no clear effect"
+### Phase 5 — PlantVillage (smaller study) ✅
+- [x] Kaggle API key in `C:\Users\Victus\.kaggle\kaggle.json` (never commit); kaggle CLI in `D:\kd-project\.venv-kaggle`
+- [x] `abdallahalidev/plantvillage-dataset`, only `color/` extracted: 38 classes, 54,305 images; configs point to `D:/kd-project/data/plantvillage_raw/plantvillage dataset/color`
+- [x] Block split in `src/data.py` (no leaf id in the file names): blocks of 20 consecutive ids per class → 37,994 / 5,425 / 10,886 (approximate; limitation in the report)
+- [x] 5 runs — `scripts\queue_pv.ps1`, `results/summary_pv_v2.csv` (single seed): teacher 99.05 · w0.5 98.72 → 98.77 (+0.05) · w1.0 98.96 → 99.27 (+0.31). Saturated → "no clear effect"
+- [ ] *Optional:* extra seeds for PlantVillage
 
-### Phase 6 — Optional (only if time remains)
-- [x] Low-data study done 25 Oct (`scripts\queue_lowdata.ps1`, 8 runs, 0.7 h; `--train-fraction`, nested stratified subsets of the 45k train split; 20 epochs, same teacher trained on the full data, single seed; `results/results_lowdata_v2.csv`, `results/summary_lowdata_v2.csv`). KD gain on test (pp) at 10% / 25% / 100% data: **w1.0 (SGD) +1.12 / +2.03 / +0.85** · **w0.5 (AdamW) -0.22 / +0.10 / +0.45**. Mixed result: for w1.0 KD helps more with less data (but 10% < 25%, not monotone); for w0.5 it is the opposite (KD does not help the tiny student when data is scarce). Do not claim "KD helps most with little data" in general; w0.5 vs w1.0 also differ in optimizer. Single seed
-- [ ] Extra seeds for more students
+### Phase 6 — Optional extras ✅
+- [x] Low-data study — `scripts\queue_lowdata.ps1`, `results/summary_lowdata_v2.csv` (single seed). Gain at 10 % / 25 % / 100 % data: w1.0 +1.12 / +2.03 / +0.85 · w0.5 −0.22 / +0.10 / +0.45 (mixed result)
+- [x] 3 seeds for all four students of the main study (see Phase 2)
+- [ ] *Optional:* extra seeds for the single-seed side experiments (optimizer swap, from scratch, low-data, alpha probe)
 
 ### Phase 7 — Report & GitHub
-- [x] Report written 26 Oct: `report/report.md` (full, 12 sections + 3 appendices, numbers cross-checked against the CSVs) and `report/report.pdf` (20 pages, built by `scripts/build_report_pdf.py` via headless Edge; extra figures by `scripts/plot_report_figures.py`). Still open for the report: proof-read by the author, add real names/roll numbers/course info if the submission form needs them, decide how the grader gets access to the private repo
-- [ ] README final check (commands work from a clean clone; results tables match CSVs)
-- [ ] Push to GitHub (no `*.pt`, no secrets); keep commit history meaningful
-- [ ] Upload best checkpoints + `.tflite` to Hugging Face / GitHub Release; backup to OneDrive / Drive
-- [ ] Update this file when each phase is finished
+- [x] Report: `report/report.md` (12 sections + 3 appendices, numbers cross-checked against the CSVs), `report/report.pdf` (20 pages, `scripts/build_report_pdf.py`), "Section" wording, compliance table with the project sheet (Section 2.4)
+- [x] `project.md` aligned with the official project sheet (row P25)
+- [x] GitHub: everything committed and pushed to `PSKprem/kd-ondevice-image-classification` (private); no `*.pt`, `.tflite`, datasets or secrets in git
+- [x] README updated with all results, export pipeline and phone benchmark
+- [x] This file updated (26 Oct)
+- [ ] **Proof-read the report** (user)
+- [ ] **Grader access to the private repo** (user decision: make public or invite)
+- [ ] Roll numbers / course info in the report, only if the submission form needs them
+- [ ] Backup of checkpoints + `.tflite` to OneDrive / Drive (user)
+- [ ] *Optional:* README check from a clean clone
+- [ ] *Optional:* upload best checkpoints + `.tflite` to Hugging Face / GitHub Release
 
-## 5. Timeline (today = 25 Oct, deadline = 20 Nov)
+## 5. Timeline
 
-| Dates | Plan |
-|---|---|
-| 25 Oct | Phase 2 (start queue, ~50 min) + Phase 3 plot script fix while it runs |
-| 26–28 Oct | Phase 4: install adb + check phone connection, export env + single-model export test, first latency on the phone |
-| 29 Oct – 1 Nov | Phase 5: PlantVillage download, grouped split, overnight runs |
-| 2–4 Nov | Phase 4: export all models, benchmark; Phase 3 final figures |
-| 5–8 Nov | Report draft |
-| 9–10 Nov | Report final, GitHub push, backups (**personal target**) |
-| 11–20 Nov | Buffer only (re-runs, fixes). Submit before 20 Nov |
-
-If a phase slips: Phase 6 is dropped first, then the from-scratch redo, then PlantVillage seeds. Never drop Phase 4 or Phase 7.
+| Dates | Plan | Actual |
+|---|---|---|
+| 24–26 Oct | Setup, all experiments, export, phone benchmark, report | ✅ done (well ahead of plan) |
+| until 10 Nov | Proof-read, grader access, backups (**personal target**) | open |
+| 11–20 Nov | Buffer only (fixes after proof-reading). Submit before 20 Nov | — |
 
 ## 6. Commands
 
 ```powershell
-# Phase 2 (resumable: run again after any interruption)
-powershell -ExecutionPolicy Bypass -File scripts\queue_v2_exp4.ps1
-# Phase 2 optional seeds
-.\.venv\Scripts\python.exe -u scripts/queue_v2_exp4.py --seeds
-# Dry run (prints commands, trains nothing)
-.\.venv\Scripts\python.exe -u scripts/queue_v2_exp4.py --dry-run
+# training queues (all resumable: run again after any interruption; add --dry-run to the .py to only print commands)
+powershell -ExecutionPolicy Bypass -File scripts\queue_v2_night1.ps1      # teacher, 8 baselines, T x alpha grid
+powershell -ExecutionPolicy Bypass -File scripts\queue_v2_exp4.ps1        # KD on all students + alpha probe
+powershell -ExecutionPolicy Bypass -File scripts\queue_v2_seeds.ps1 -Students "w1.4 mbv3s"
+powershell -ExecutionPolicy Bypass -File scripts\queue_recipe_swap.ps1    # optimizer swap
+powershell -ExecutionPolicy Bypass -File scripts\queue_scratch.ps1        # from scratch
+powershell -ExecutionPolicy Bypass -File scripts\queue_lowdata.ps1        # low-data
+powershell -ExecutionPolicy Bypass -File scripts\queue_pv.ps1             # PlantVillage
+
+# figures and report
+.\.venv\Scripts\python.exe scripts/plot_results.py
+.\.venv\Scripts\python.exe scripts/plot_report_figures.py
+D:\kd-project\.venv-export\Scripts\python.exe scripts/build_report_pdf.py   # report.md -> report.pdf
+
+# export + phone (export venv / adb)
+powershell -ExecutionPolicy Bypass -File scripts\export_all.ps1
+.\.venv\Scripts\python.exe scripts/phone_benchmark.py --adb "D:/Downloads/platform-tools-latest-windows/platform-tools/adb.exe"
 ```
 
-Logs: `D:\kd-project\logs\`. Checkpoints: `D:\kd-project\runs_v2\<run_name>\best.pt`, `last.pt`.
+Logs: `D:\kd-project\logs\`. Checkpoints: `D:\kd-project\runs_v2\<run_name>\best.pt`, `last.pt`. Exports: `D:\kd-project\export\<run_name>\`.
 
 ## 7. Hardware, storage, security
 
-- RTX 4050 6 GB (use AMP), i7-13620H, 16 GB RAM; data + checkpoints on D:. Laptop plugged in, sleep off, cooling pad, Windows Update paused while training.
-- Git holds code, configs, `results/*.csv`, figures, report (<60 MB). Checkpoints, datasets, `.onnx`, `.tflite` stay out (`.gitignore`).
-- Never commit Kaggle key or Hugging Face token (`.env`, `kaggle.json`, `*token*.txt` are ignored).
-- Stop anytime with `Ctrl+C`; restart with `--resume` / re-run the queue — loses at most 1 epoch.
+- RTX 4050 6 GB (AMP), i7-13620H, 16 GB RAM; data, checkpoints, exports, caches and temp files on D:.
+- Git holds code, configs, `results/*.csv`, figures, report (.md + .pdf). Checkpoints, datasets, `.onnx`, `.tflite`, `report/report.html` stay out (`.gitignore`).
+- Never commit the Kaggle key or any token (`.env`, `kaggle.json`, `*token*.txt` are ignored).
 
-## 8. Risks
+## 8. Risks (status)
 
-| Risk | Mitigation |
+| Risk | Status |
 |---|---|
-| TFLite export fails on Windows | Test early (Phase 4); fall back to `onnx2tf` / `ai-edge-torch` / Colab / WSL |
-| `benchmark_model` binary / adb setup problems | Install platform-tools early; test with any small .tflite first |
-| PlantVillage leakage | No leaf id available -> block split of consecutive ids (approximate); state as a limitation |
-| KD gains within noise (≈ 0.3–1 pp) | Report full grid, add seeds where possible, keep claims modest |
-| Laptop sleep / thermal throttling / updates | Settings in section 7, resumable queues |
-| GitHub 100 MB limit | Checkpoints never in git |
+| TFLite export fails on Windows | Solved: onnx2tf FP32 + ai-edge-quantizer |
+| INT8 accuracy loss on small models | Solved: mixed INT8 (depthwise float32); cause not established |
+| PlantVillage leakage | Approximate block split; stated as a limitation |
+| KD gains within noise | 3 seeds on all students; gains positive in all 12 seed pairs |
+| Checkpoints only on one disk | **Open** → backup (task 4 in Section 0) |
+| Grader cannot open a private repo | **Open** → task 2 in Section 0 |
 
-## 9. Report outline
-
-1. Introduction · 2. Related work (Hinton 2015, MobileNetV2) · 3. Method (KD loss, T, α)
-4. Experimental setup (datasets, v2 train/val/test protocol, models, recipes, hardware)
-5. Results: teacher vs baseline vs KD (accuracy, size, latency); T × α heatmap; accuracy-vs-size Pareto (baseline vs KD); KD gain vs width; pretrained vs from-scratch; CIFAR-100 vs PlantVillage; on-device table
-6. Discussion — *when does KD help the most?* (including honest limits: small gains, seed noise, single common T/α, v1→v2 protocol change)
-7. Conclusion · 8. References
-
-## 10. Repository layout (actual)
+## 9. Repository layout (actual)
 
 ```
 configs/   teacher.yaml, student.yaml, kd.yaml
 src/       data.py, models.py, kd_loss.py, train.py, evaluate.py, utils.py
-scripts/   train/queue: queue_v2_night1.py|.ps1, queue_v2_exp4.py|.ps1   (v2, current)
-           history  : queue_night3, queue_exp4, queue_seeds, sweep*, overnight_night1, pretrained_baselines (v1)
-           tools    : plot_results.py, export.py, benchmark.py
-results/   results_v2.csv, best_recipes_v2.csv, best_config_v2.json, kd_gain_v2.csv (after Phase 2),
-           results.csv + quick_tests.csv (v1 history), figures/
-report/    report.pdf (to do)
-notebooks/ optional
+scripts/   queues (v2): queue_v2_night1, queue_v2_exp4, queue_v2_seeds, queue_recipe_swap, queue_scratch, queue_lowdata, queue_pv (.py/.ps1)
+           export/phone: export.py, export_all.py|.ps1, quantize_tflite.py, eval_tflite.py, diag_quant.py, phone_benchmark.py, benchmark.py
+           figures/report: plot_results.py, plot_report_figures.py, build_report_pdf.py
+           history (v1): queue_night3, queue_exp4, queue_seeds, sweep*, overnight_night1, pretrained_baselines
+results/   results_v2.csv, results_pv_v2.csv, results_scratch_v2.csv, results_lowdata_v2.csv, export_eval_v2.csv, phone_latency_v2.csv,
+           kd_gain_v2.csv, summary_*_v2.csv, recipe_swap_v2.csv, alpha_probe_v2.csv, best_*_v2.*, results.csv + quick_tests.csv (v1), figures/
+report/    report.md, report.pdf
 ```
