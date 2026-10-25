@@ -1,14 +1,16 @@
 # P25 — Knowledge Distillation for On-Device Image Classification
 
+> Source of truth: the course project sheet (row P25). This file mirrors that row; if they ever differ, the sheet wins.
+
 ## Project Overview
 
 | Field | Details |
 |---|---|
 | Project ID | P25 |
+| Assigned Team | 25 |
+| Section | section-b (Section B) |
 | Project Title | Knowledge Distillation for On-Device Image Classification |
-| Section | Section B |
-| Assigned Team | Team 25 |
-| Domain / Type | Image |
+| Type | Image |
 
 ## Team Members
 
@@ -21,24 +23,21 @@
 
 ## Problem Statement
 
-Compress a large teacher network into a tiny student network that runs on a phone with minimal accuracy loss.
+Compress a large teacher network into a tiny student that runs on a phone with minimal accuracy loss.
 
-## Suggested Datasets
+## Suggested Dataset
 
-- CIFAR-100
-- PlantVillage
+CIFAR-100 or PlantVillage
 
-## Suggested Approach (Baseline → Advanced)
+(One of the two is enough; this project uses both — CIFAR-100 as the main study and PlantVillage as a smaller second study.)
 
-1. Train a ResNet-50 teacher network.
-2. Train a MobileNetV2 student network normally (baseline, no KD).
-3. Train the MobileNetV2 student with Knowledge Distillation (KD) and compare against the baseline.
-4. Vary hyperparameters: Temperature ($T$) and Alpha ($\alpha$).
-5. Measure latency, model size, and classification accuracy on-device.
+## Suggested Approach (baseline → advanced)
 
-## Research Angle (Paper-Worthy Contribution)
+Train ResNet-50 teacher → MobileNetV2 student trained normally vs with KD (vary temperature, alpha) → measure latency/size.
 
-Analyze the accuracy-vs-model-size Pareto curve to answer: **When does Knowledge Distillation help the most?**
+## Research Angle (what makes it paper-worthy)
+
+Accuracy-vs-model-size Pareto curve; when does KD help most?
 
 ## Deliverables
 
@@ -47,7 +46,10 @@ Analyze the accuracy-vs-model-size Pareto curve to answer: **When does Knowledge
 
 **Submission Deadline:** 20 Nov 2026, 11:59 PM IST
 
-## Reference Papers
+*(Deliverables and deadline are not part of the sheet row above; they are kept from the earlier version of this file.)*
 
-1. Hinton et al., *Distilling the Knowledge in a Neural Network*, 2015 — https://arxiv.org/abs/1503.02531
-2. Sandler et al., *MobileNetV2: Inverted Residuals and Linear Bottlenecks*, CVPR 2018 — https://arxiv.org/abs/1801.04381
+## Reference Paper(s)
+
+[1] Hinton et al., *Distilling the Knowledge in a Neural Network*, 2015 — https://arxiv.org/abs/1503.02531
+
+[2] Sandler et al., *MobileNetV2: Inverted Residuals and Linear Bottlenecks*, CVPR 2018 — https://arxiv.org/abs/1801.04381

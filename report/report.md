@@ -68,18 +68,18 @@ confounded with model size in the main table, and only one phone was used.
 
 ### 2.1 Problem statement
 
-Large neural networks give the best accuracy but are too big and slow for phones. The task given in the project brief is to
-*compress a large teacher network into a tiny student network that runs on a phone with minimal accuracy loss*.
+Large neural networks give the best accuracy but are too big and slow for phones. The task given in the project sheet is to
+*compress a large teacher network into a tiny student that runs on a phone with minimal accuracy loss*.
 
 ### 2.2 Objectives
 
-| # | Objective (from the project brief) | Where addressed |
+| # | Objective (from the project sheet) | Where addressed |
 |---|---|---|
 | O1 | Train a ResNet-50 teacher | §6.1 |
 | O2 | Train a MobileNetV2 student normally (baseline, no KD) | §6.2 |
 | O3 | Train the student with knowledge distillation and compare with the baseline | §6.3, §6.4 |
 | O4 | Vary the temperature *T* and weight *α* | §6.3, §6.5 |
-| O5 | Measure latency and model size on a phone (the project sheet); `project.md` also lists classification accuracy on-device | §7 — latency and size on the phone; accuracy of the exported models measured with the TFLite interpreter on a laptop, **not on the phone** (see §9) |
+| O5 | Measure latency and model size (on a phone) | §7 — latency on the phone, file sizes; the accuracy of the exported models was additionally checked with the TFLite interpreter on a laptop (extra, see §9) |
 | O6 (research angle) | Analyse the accuracy-vs-size Pareto curve: **when does KD help the most?** | §6.4, §6.6–6.9, §8 |
 
 ### 2.3 Contributions
@@ -91,10 +91,10 @@ Large neural networks give the best accuracy but are too big and slow for phones
 * A diagnosis of why INT8 quantization breaks the smallest MobileNets, and a mixed-precision fix.
 * On-device latency measurements of every exported model on a real phone.
 
-### 2.4 Compliance with the project brief
+### 2.4 Compliance with the project sheet
 
-The brief (`project.md`, and the project sheet entry for P25: *"Train ResNet-50 teacher → MobileNetV2 student trained normally vs with KD (vary temperature, alpha) → measure latency/size"*;
-suggested datasets *"CIFAR-100 or PlantVillage"*; research angle *"Accuracy-vs-model-size Pareto curve; when does KD help most?"*) was followed as follows.
+The project sheet entry for P25 (mirrored in `project.md`) reads: *"Train ResNet-50 teacher → MobileNetV2 student trained normally vs with KD (vary temperature, alpha) → measure latency/size"*;
+suggested dataset *"CIFAR-100 or PlantVillage"*; research angle *"Accuracy-vs-model-size Pareto curve; when does KD help most?"*. It was followed as follows.
 
 | Requirement in the brief | Status | Note |
 |---|---|---|
@@ -104,7 +104,7 @@ suggested datasets *"CIFAR-100 or PlantVillage"*; research angle *"Accuracy-vs-m
 | Vary temperature T and α | Done | §6.3 (4 × 3 grid), §6.5 (α probe) |
 | Datasets: CIFAR-100 *or* PlantVillage | Done for both | CIFAR-100 main, PlantVillage secondary (approximate split, §4.4) |
 | Measure latency and model size (project sheet: *"measure latency/size"*) | Done | latency on the phone (§7.5), file sizes (§7.3), parameters (§4.2) |
-| Measure classification accuracy on-device (stated only in `project.md`, not in the project sheet) | **Partly** | accuracy of every exported `.tflite` was measured with the TFLite interpreter on a laptop on the full test set; the phone itself was used for latency (§9) |
+| Extra (not required by the sheet): accuracy of the exported models | Done, on a laptop | every exported `.tflite` was evaluated on the full 10 000-image test set with the TFLite interpreter; the phone itself was used for latency (§9) |
 | Accuracy-vs-model-size Pareto curve | Done | accuracy vs parameters (§6.4) and accuracy vs file size, FP32 and INT8 (§7.6) |
 | Answer *when does KD help the most?* | Done | §6.4–6.8 and §8 |
 | Reference papers (Hinton 2015, Sandler 2018) | Done | §3, §12 |
