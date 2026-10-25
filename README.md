@@ -124,37 +124,41 @@ Phone latency is measured with TFLite `benchmark_model` through `adb` (see `scri
 | `scripts/benchmark.py` | Params / FLOPs / file size (+ on-device latency via adb) |
 | `scripts/queue_night3.*`, `queue_exp4.py`, `queue_seeds.py`, `sweep*.{py,ps1}`, `overnight_night1.ps1`, `pretrained_baselines.ps1` | v1 history (test-selected protocol); not used for headline results |
 
-## Results so far (CIFAR-100, v2, test top-1; mean over seeds where n > 1)
+## Results so far (CIFAR-100, v2, test top-1; mean ± std over 3 seeds: 42 / 0 / 1)
 
 | Model | Params (M) | Seeds | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |
 |---|---|---|---|---|---|
 | ResNet-50 (teacher) | 23.71 | 1 | 85.46 | — | — |
 | MobileNetV2 w0.5 | 0.82 | 3 | 74.71 ± 0.16 | 75.17 ± 0.15 | +0.46 |
-| MobileNetV3-Small | 1.62 | 1 | 78.34 | 80.02 | +1.68 |
+| MobileNetV3-Small | 1.62 | 3 | 78.24 ± 0.26 | 79.77 ± 0.50 | +1.53 |
 | MobileNetV2 w1.0 | 2.35 | 3 | 80.82 ± 0.07 | 81.63 ± 0.18 | +0.81 |
-| MobileNetV2 w1.4 | 4.50 | 1 | 82.36 | 83.61 | +1.25 |
+| MobileNetV2 w1.4 | 4.50 | 3 | 82.36 ± 0.02 | 84.06 ± 0.40 | +1.70 |
 
-Per-seed paired gains (seeds 42 / 0 / 1): w0.5 +0.45 / +0.44 / +0.49, w1.0 +0.85 / +0.89 / +0.68, i.e. small but
-positive for every seed. w1.4 and MobileNetV3-Small are still single-seed. The gain grows with width inside
-MobileNetV2, but optimizer (AdamW for w0.5 / MBV3-S, SGD for w1.0 / w1.4, each chosen on val) and architecture are
-mixed with size, so size alone cannot be credited. The final tables and figures are produced by
-`scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still
-to come (see `task.md`).
+Per-seed paired gains (seeds 42 / 0 / 1): w0.5 +0.45 / +0.44 / +0.49, w1.0 +0.85 / +0.89 / +0.68,
+w1.4 +1.25 / +2.02 / +1.84, MBV3-S +1.68 / +2.15 / +0.76 — positive for every student and every seed. The gain grows
+with width inside MobileNetV2 (+0.46, +0.81, +1.70), but optimizer (AdamW for w0.5 / MBV3-S, SGD for w1.0 / w1.4, each
+chosen on val) and architecture are mixed with size; the optimizer check below shows the width trend also holds with
+AdamW alone. The final tables and figures are produced by `scripts/plot_results.py`
+(`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still to come (see `task.md`).
 
-### Exported TFLite models (CIFAR-100 test set; INT8 = dynamic-range, full 10k images)
+### Exported TFLite models (CIFAR-100 test set, full 10k images; KD checkpoints / baseline checkpoints)
 
-| Model | FP32 .tflite (MiB) | INT8 .tflite (MiB) | PyTorch FP32 KD / baseline | INT8 KD / baseline |
-|---|---|---|---|---|
-| MobileNetV2 w0.5 | 3.12 | 0.94 | 75.03 / 74.58 | 71.63 / 71.75 |
-| MobileNetV3-Small | 6.22 | 1.75 | 80.02 / 78.34 | 13.14 / 9.76 (broken) |
-| MobileNetV2 w1.0 | 8.95 | 2.52 | 81.71 / 80.86 | 81.78 / 80.59 |
-| MobileNetV2 w1.4 | 17.10 | 4.65 | 83.61 / 82.36 | 83.23 / 81.97 |
-| ResNet-50 (teacher) | 90.39 | — | 85.46 (FP32) | — |
+| Model | FP32 .tflite (MiB) | PyTorch FP32 | INT8 dynamic (MiB) | INT8 dynamic | INT8 mixed (MiB) | INT8 mixed |
+|---|---|---|---|---|---|---|
+| MobileNetV2 w0.5 | 3.12 | 75.03 / 74.58 | 0.94 | 71.63 / 71.75 | 1.00 | **74.67 / 74.43** |
+| MobileNetV3-Small | 6.22 | 80.02 / 78.34 | 1.75 | 13.14 / 9.76 (broken) | 1.89 | **79.52 / 78.04** |
+| MobileNetV2 w1.0 | 8.95 | 81.71 / 80.86 | 2.52 | 81.78 / 80.59 | 2.62 | 81.78 / 80.48 |
+| MobileNetV2 w1.4 | 17.10 | 83.61 / 82.36 | 4.65 | 83.23 / 81.97 | 4.79 | 83.55 / 82.26 |
+| ResNet-50 (teacher) | 90.39 | 85.46 | — | — | — | — |
 
-FP32 TFLite predictions are identical to PyTorch (100% agreement on all models). Dynamic INT8 is accurate for
-w1.0 / w1.4 (and the KD advantage of about +1.2 pp survives quantization), loses 3.4 pp on w0.5 and breaks MobileNetV3-Small.
-On 2000 test images, weight-only INT8 keeps MBV3-S usable (79.65 vs 80.30 FP32) but still costs w0.5 about 2.9 pp
-(72.85 vs 75.75); static INT8 was worse. The reason is not established. Latency on the phone is still to come.
+FP32 TFLite predictions are identical to PyTorch (100% agreement on all models). "Mixed" = regular convs and the
+classifier in int8, depthwise convs kept in float32. Plain dynamic INT8 loses 3.4 pp on w0.5 and breaks
+MobileNetV3-Small; a PyTorch diagnosis (`scripts/diag_quant.py`) shows the w0.5 loss comes from its depthwise layers
+(int8 on depthwise only: -2.6 pp; same layers in w1.0: -0.05 pp) and that the conversion itself is correct (PyTorch
+fake-quantization reproduces the TFLite weight-only accuracy exactly). Why w0.5's depthwise weights are so sensitive is
+not established. The mixed recipe recovers the accuracy (w0.5 -0.36 pp vs FP32, MBV3-S -0.50 pp) at about the same
+size; the KD advantage survives quantization (+1.3 pp on w1.0 and w1.4). Because depthwise layers stay float, the
+latency gain of "mixed" may be smaller than for full INT8 — to be measured on the phone.
 
 ### Low-data study (CIFAR-100, pretrained, test top-1, 20 epochs, single seed, KD T=2 alpha=0.9)
 

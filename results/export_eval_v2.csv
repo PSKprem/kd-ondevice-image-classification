@@ -17,3 +17,11 @@ kd_cifar100_w0.5_v2_adamw1e-3_T2_a0.9,model_int8_static.tflite,1.06,2000,69.35,8
 kd_cifar100_mbv3s_v2_adamw1e-3_T2_a0.9,model_int8_weightonly.tflite,1.76,2000,79.65,95.60
 kd_cifar100_w0.5_v2_adamw1e-3_T2_a0.9,model_int8_mixed_weightonly.tflite,1.00,2000,75.15,96.75
 kd_cifar100_mbv3s_v2_adamw1e-3_T2_a0.9,model_int8_mixed_weightonly.tflite,1.90,2000,79.75,97.30
+student_mbv3s_cifar100_v2_adamw1e-3,model_int8_mixed_dynamic.tflite,1.89,10000,78.04,95.89
+kd_cifar100_w0.5_v2_adamw1e-3_T2_a0.9,model_int8_mixed_dynamic.tflite,1.00,10000,74.67,95.82
+student_mbv2_cifar100_w0.5_v2_adamw1e-3,model_int8_mixed_dynamic.tflite,1.00,10000,74.43,95.68
+kd_cifar100_w1.0_v2_sgd0.01_T2_a0.9,model_int8_mixed_dynamic.tflite,2.62,10000,81.78,97.67
+student_mbv2_cifar100_w1.0_v2_sgd0.01,model_int8_mixed_dynamic.tflite,2.62,10000,80.48,96.25
+kd_cifar100_w1.4_v2_sgd0.01_T2_a0.9,model_int8_mixed_dynamic.tflite,4.79,10000,83.55,98.41
+student_mbv2_cifar100_w1.4_v2_sgd0.01,model_int8_mixed_dynamic.tflite,4.79,10000,82.26,97.70
+kd_cifar100_mbv3s_v2_adamw1e-3_T2_a0.9,model_int8_mixed_dynamic.tflite,1.89,10000,79.52,96.47
