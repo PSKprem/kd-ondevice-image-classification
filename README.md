@@ -139,7 +139,19 @@ positive for every seed. w1.4 and MobileNetV3-Small are still single-seed. The g
 MobileNetV2, but optimizer (AdamW for w0.5 / MBV3-S, SGD for w1.0 / w1.4, each chosen on val) and architecture are
 mixed with size, so size alone cannot be credited. The final tables and figures are produced by
 `scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency and PlantVillage
-results are still to come (see `task.md`). The final tables and figures are produced by `scripts/plot_results.py`
+results are still to come (see `task.md`).
+
+### PlantVillage (block split, 20 epochs, same recipes and KD setting, single seed, test top-1)
+
+| Model | Params (M) | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |
+|---|---|---|---|---|
+| ResNet-50 (teacher) | 23.59 | 99.05 | — | — |
+| MobileNetV2 w0.5 | 0.74 | 98.72 | 98.77 | +0.05 |
+| MobileNetV2 w1.0 | 2.27 | 98.96 | 99.27 | +0.31 |
+
+The dataset is saturated (~99%): with 10,886 test images, +0.05 pp is about 5 images and +0.31 pp about 34, so there is
+no clear KD effect here. The w1.0 KD student even exceeds its teacher, which together with the approximate block split
+(possible near-duplicate leakage) means PlantVillage cannot separate the models well. The final tables and figures are produced by `scripts/plot_results.py`
 (`results/summary_table_v2.csv`, `results/figures/`). On-device latency and PlantVillage results are still to come
 (see `task.md`).
 

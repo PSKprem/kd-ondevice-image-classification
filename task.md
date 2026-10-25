@@ -82,13 +82,13 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [ ] Record phone model, Android version, CPU, threads used and whether XNNPACK / GPU delegate is on (needed for the report's latency table)
 - [ ] Laptop CPU latency may be added as an extra column, clearly labelled as a proxy (not the main on-device number)
 
-### Phase 5 — PlantVillage (smaller study) ⏳
+### Phase 5 — PlantVillage (smaller study) ✅ (runs done; optional seeds)
 - [x] Kaggle account + legacy API key (`C:\Users\Victus\.kaggle\kaggle.json`, never commit); kaggle CLI 2.2.5 in separate venv `D:\kd-project\.venv-kaggle`
 - [x] Downloaded `abdallahalidev/plantvillage-dataset` (2.04 GB zip) and extracted ONLY `color/` to `D:\kd-project\data\plantvillage_raw\plantvillage dataset\color`: 38 classes, 54,305 images (152 to 5,507 per class). Config still points to `D:/kd-project/data/plantvillage` -> set `plantvillage_dir` to the `color` folder
 - Finding: filenames are `<uuid>___<code>.JPG` (or `<code>.JPG`); the code is a per-image id (53,091 unique codes), so **leaf identity is not in the filename** -> exact per-leaf grouping is impossible. Plan: block split (consecutive ids within a class go to the same split); say in the report that it is approximate
 - [x] `_build_plantvillage` implemented in `src/data.py` (block split: per class, blocks of 20 consecutive ids go whole to train / val / test = 37,994 / 5,425 / 10,886 (70/10/20), 38 classes, no overlap, deterministic, `split_seed` 42). Extra flags `--dataset plantvillage --plantvillage-dir ...`; configs now point to the `color` folder. Smoke test passed end-to-end (38-class head). Check: adjacent ids are more similar than random same-class images (pixel diff 32 vs 39), so blocks reduce but cannot fully remove leaf leakage -> state as a limitation
-- [ ] Runs (5): teacher ResNet-50 + MBV2 w0.5 and w1.0, each baseline and KD (T2, α0.9, same recipes as CIFAR-100; recipe not re-tuned — state this). **Script ready, dry-run OK, not started:** `scripts\queue_pv.ps1` (waits for the seeds queue to finish, then runs; results in `results/results_pv_v2.csv`, summary in `results/summary_pv_v2.csv`). Epochs default 20 (flag `-Epochs`); real time per epoch is still unknown -> check the first teacher epoch time and lower epochs if needed
-- [ ] Expect accuracy near ceiling (~99%) → small KD gain; report honestly
+- [x] Runs (5) finished 25 Oct (`scripts\queue_pv.ps1`, 1.4 h, no failures; 20 epochs, same recipes as CIFAR-100, recipe not re-tuned): results in `results/results_pv_v2.csv`, summary `results/summary_pv_v2.csv`. Test top-1 (single seed): teacher ResNet-50 99.05 (val 98.84) · w0.5 baseline 98.72 -> KD 98.77 (+0.05; val 98.19 -> 98.43) · w1.0 baseline 98.96 -> KD 99.27 (+0.31; val 98.88 -> 99.08)
+- Interpretation (be honest in the report): the dataset is saturated (~99%). The test set has 10,886 images, so +0.05 is ~5 images (noise) and +0.31 is ~34 images (borderline, single seed). The w1.0 KD student (99.27) even beats its teacher (99.05), which together with the approximate block split (near-duplicate leakage, see above) suggests PlantVillage cannot separate the models well -> do NOT claim KD helps here; say "no clear effect"
 
 ### Phase 6 — Optional (only if time remains)
 - [ ] Low-data study (10% / 25% / 100% training data) on one student

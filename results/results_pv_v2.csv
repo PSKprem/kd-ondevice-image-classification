@@ -1,0 +1,6 @@
+run_name,dataset,model,width_mult,kd,teacher_model,temperature,alpha,epochs,image_size,seed,optimizer,lr,weight_decay,label_smoothing,params_m,n_train,n_val,best_epoch,best_val_top1,best_val_top5,test_top1,test_top5,final_test_top1,final_test_top5,pretrained
+teacher_resnet50_pv_v2,plantvillage,resnet50,1.0,0,,,,20,128,42,sgd,0.01,0.0005,0.0,23.5859,37994,5425,16,98.8387,99.9263,99.0538,99.9633,99.0446,99.9724,1
+student_mbv2_pv_w0.5_v2_adamw1e-3,plantvillage,mobilenetv2,0.5,0,,,,20,128,42,adamw,0.001,0.05,0.0,0.7364,37994,5425,20,98.1935,99.9631,98.7231,99.9541,98.7231,99.9541,1
+kd_pv_w0.5_v2_adamw1e-3_T2_a0.9,plantvillage,mobilenetv2,0.5,1,resnet50,2.0,0.9,20,128,42,adamw,0.001,0.05,0.0,0.7364,37994,5425,17,98.4332,99.9631,98.7691,99.9724,98.7599,99.9724,1
+student_mbv2_pv_w1.0_v2_sgd0.01,plantvillage,mobilenetv2,1.0,0,,,,20,128,42,sgd,0.01,0.0005,0.0,2.2725,37994,5425,16,98.8756,99.9631,98.962,99.9357,98.9712,99.9173,1
+kd_pv_w1.0_v2_sgd0.01_T2_a0.9,plantvillage,mobilenetv2,1.0,1,resnet50,2.0,0.9,20,128,42,sgd,0.01,0.0005,0.0,2.2725,37994,5425,16,99.0783,99.9816,99.2743,99.9449,99.2467,99.9357,1
