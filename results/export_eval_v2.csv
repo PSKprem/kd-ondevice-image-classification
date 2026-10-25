@@ -15,3 +15,5 @@ teacher_resnet50_cifar100_v2,model_float32.tflite,90.39,300,87.67,100.00
 kd_cifar100_w0.5_v2_adamw1e-3_T2_a0.9,model_int8_weightonly.tflite,0.95,2000,72.85,89.45
 kd_cifar100_w0.5_v2_adamw1e-3_T2_a0.9,model_int8_static.tflite,1.06,2000,69.35,82.20
 kd_cifar100_mbv3s_v2_adamw1e-3_T2_a0.9,model_int8_weightonly.tflite,1.76,2000,79.65,95.60
+kd_cifar100_w0.5_v2_adamw1e-3_T2_a0.9,model_int8_mixed_weightonly.tflite,1.00,2000,75.15,96.75
+kd_cifar100_mbv3s_v2_adamw1e-3_T2_a0.9,model_int8_mixed_weightonly.tflite,1.90,2000,79.75,97.30

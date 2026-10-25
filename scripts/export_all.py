@@ -3,7 +3,7 @@
 Run with the EXPORT venv python (D:\\kd-project\\.venv-export). For each checkpoint:
   1. export.py --onnx-only          -> model.onnx
   2. onnx2tf -b 1                   -> tf/model_float32.tflite
-  3. quantize_tflite.py (dynamic)   -> model_int8_dynamic.tflite
+  3. quantize_tflite.py             -> model_int8_dynamic.tflite and model_int8_mixed_dynamic.tflite (depthwise kept float)
   4. eval_tflite.py                 -> one row per file in results/export_eval_v2.csv
 
 Models: KD student (the model that would ship) + baseline student for each of w0.5 / w1.0 / w1.4 / MBV3-Small
@@ -88,6 +88,9 @@ def convert(name: str, config: str, extra: list[str]) -> Path:
     int8 = out / "model_int8_dynamic.tflite"
     if not int8.exists():
         run([sys.executable, "scripts/quantize_tflite.py", "--fp32", fp32, "--out", int8, "--mode", "dynamic"])
+    mixed = out / "model_int8_mixed_dynamic.tflite"  # depthwise convs kept in float32 (see scripts/diag_quant.py)
+    if not mixed.exists():
+        run([sys.executable, "scripts/quantize_tflite.py", "--fp32", fp32, "--out", mixed, "--mode", "mixed_dynamic"])
     return out
 
 
@@ -118,6 +121,7 @@ def main() -> None:
             if role == "kd":
                 evaluate(name, out / "tf" / "model_float32.tflite", config, extra, 2000, True)
             evaluate(name, out / "model_int8_dynamic.tflite", config, extra, 0, True)
+            evaluate(name, out / "model_int8_mixed_dynamic.tflite", config, extra, 0, True)
         except Exception as e:  # keep going with the other models
             log(f"FAILED {name}: {e}")
     log(f"ALL DONE in {(time.time() - t0) / 60:.1f} min. Results: {EVAL_CSV}")

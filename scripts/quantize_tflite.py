@@ -26,13 +26,25 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="P25 TFLite INT8 quantization")
     ap.add_argument("--fp32", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--mode", choices=["dynamic", "static", "weightonly"], default="dynamic")
+    ap.add_argument("--mode", choices=["dynamic", "static", "weightonly", "mixed_weightonly", "mixed_dynamic"],
+                    default="dynamic")
     ap.add_argument("--calib", default=None, help=".npy NHWC float32 images (static mode)")
     args = ap.parse_args()
 
     qt = quantizer.Quantizer(float_model=args.fp32)
     if args.mode == "dynamic":
         qt.load_quantization_recipe(recipe.dynamic_wi8_afp32())
+        result = qt.quantize()
+    elif args.mode.startswith("mixed"):
+        # depthwise convs stay float32 (they are the layers that lose accuracy when quantized, see scripts/diag_quant.py);
+        # regular convs + fully-connected layers are int8 (weight-only or dynamic).
+        base = (recipe.weight_only_wi8_afp32() if args.mode == "mixed_weightonly" else recipe.dynamic_wi8_afp32())[0]
+        rules = []
+        for op in ("CONV_2D", "FULLY_CONNECTED"):
+            rule = dict(base)
+            rule["operation"] = op
+            rules.append(rule)
+        qt.load_quantization_recipe(rules)
         result = qt.quantize()
     elif args.mode == "weightonly":
         qt.load_quantization_recipe(recipe.weight_only_wi8_afp32())
