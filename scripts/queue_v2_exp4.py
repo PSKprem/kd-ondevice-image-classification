@@ -13,7 +13,9 @@ logs to results/results_v2.csv, checkpoints in D:/kd-project/runs_v2.
 Resumable: finished runs are skipped, interrupted runs continue from last.pt.
 
 Usage (from repo root):
-    .\\.venv\\Scripts\\python.exe -u scripts/queue_v2_exp4.py [--dry-run] [--seeds]
+    .\\.venv\\Scripts\\python.exe -u scripts/queue_v2_exp4.py [--dry-run] [--seeds] [--probe]
+  Part C (--probe): alpha-sensitivity at T=2 on w0.5 and w1.4 (alpha 0.1, 0.5; 0.9 = main run)
+          -> results/alpha_probe_v2.csv. For the discussion only, never used to pick final models.
 """
 from __future__ import annotations
 
@@ -38,6 +40,10 @@ ALL_STUDENTS = ["w0.5", "w1.0", "w1.4", "mbv3s"]
 # One common KD setting for all students (simple + defensible: within ~0.4 pp of the w1.0 grid best,
 # no harm on w0.5, and it gave +1.7..+2.0 pp on w1.4 / MBV3-S in v1).
 COMMON_T, COMMON_ALPHA = 2.0, 0.9
+# Part C (optional alpha-sensitivity probe, discussion figure only): T fixed, extra alphas.
+PROBE_STUDENTS = ["w0.5", "w1.4"]
+PROBE_ALPHAS = [0.1, 0.5]
+PROBE_CSV = ROOT / "results" / "alpha_probe_v2.csv"
 
 
 def with_seed(name: str, seed: int) -> str:
@@ -106,10 +112,47 @@ def summarize(recipes: dict[str, str], T: float, a: float) -> None:
         q.log(f"wrote {GAIN_CSV}")
 
 
+def probe_alpha(recipes: dict[str, str], T: float) -> None:
+    """Optional alpha-sensitivity probe (T fixed): extra alphas on a small and a large student.
+    Only for the discussion figure - final models always use the common (T, alpha)."""
+    q.log(f"===== PROBE: alpha in {PROBE_ALPHAS} (+ main alpha) at T={T:g} on {PROBE_STUDENTS} =====")
+    for tag in PROBE_STUDENTS:
+        if tag not in recipes:
+            continue
+        for pa in PROBE_ALPHAS:
+            q.train(q.kd_name(tag, recipes[tag], T, pa), "configs/kd.yaml",
+                    kd_args(tag, recipes[tag], T, pa, MAIN_SEED))
+    rows = []
+    for tag in PROBE_STUDENTS:
+        if tag not in recipes:
+            continue
+        rec = recipes[tag]
+        base_t = q.metric(q.baseline_name(tag, rec), "test_top1")
+        base_v = q.metric(q.baseline_name(tag, rec), "best_val_top1")
+        for pa in sorted({*PROBE_ALPHAS, COMMON_ALPHA}):
+            name = q.kd_name(tag, rec, T, pa)
+            t, v = q.metric(name, "test_top1"), q.metric(name, "best_val_top1")
+            if t is None or v is None:
+                continue
+            rows.append({"student": tag, "T": T, "alpha": pa,
+                         "val_top1": f"{v:.2f}", "test_top1": f"{t:.2f}",
+                         "val_gain_pp": f"{v - base_v:+.2f}", "test_gain_pp": f"{t - base_t:+.2f}"})
+    if rows:
+        for r in rows:
+            print("   " + "  ".join(f"{k}={v}" for k, v in r.items()), flush=True)
+        if not q.DRY_RUN:
+            with open(PROBE_CSV, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+                w.writeheader()
+                w.writerows(rows)
+            q.log(f"wrote {PROBE_CSV}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="P25 v2 Experiment 4 queue")
     ap.add_argument("--dry-run", action="store_true", help="print commands, run nothing")
     ap.add_argument("--seeds", action="store_true", help="also run Part B (extra seeds 0,1), optional")
+    ap.add_argument("--probe", action="store_true", help="also run the alpha-sensitivity probe (Part C)")
     args = ap.parse_args()
     q.DRY_RUN = args.dry_run
 
@@ -135,6 +178,8 @@ def main() -> None:
                     run_pair(tag, recipes[tag], T, a, seed)
 
     summarize(recipes, T, a)
+    if args.probe:
+        probe_alpha(recipes, T)
     q.log(f"ALL DONE in {(time.time() - t0) / 3600:.2f} h. Run status:")
     for s in q.STATUS:
         print("   " + s, flush=True)

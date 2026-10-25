@@ -7,6 +7,6 @@ $py = ".\.venv\Scripts\python.exe"
 $logs = "D:\kd-project\logs"
 New-Item -ItemType Directory -Force $logs | Out-Null
 
-& $py -u scripts/queue_v2_exp4.py 2>&1 | Tee-Object -FilePath "$logs\queue_v2_exp4.log" -Append
+& $py -u scripts/queue_v2_exp4.py --probe 2>&1 | Tee-Object -FilePath "$logs\queue_v2_exp4.log" -Append
 
 Write-Host "=== QUEUE DONE ==="
