@@ -141,6 +141,19 @@ mixed with size, so size alone cannot be credited. The final tables and figures 
 `scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still
 to come (see `task.md`).
 
+### From scratch vs pretrained (CIFAR-100, test top-1, 20 epochs, single seed for scratch)
+
+| Student | Init | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |
+|---|---|---|---|---|
+| MobileNetV2 w0.5 | pretrained (3 seeds) | 74.71 | 75.17 | +0.46 |
+| MobileNetV2 w0.5 | from scratch | 47.44 | 49.94 | +2.50 |
+| MobileNetV2 w1.0 | pretrained (3 seeds) | 80.82 | 81.63 | +0.81 |
+| MobileNetV2 w1.0 | from scratch | 57.33 | 62.93 | +5.60 |
+
+Without ImageNet weights KD helps several times more than with them. From-scratch students are not converged after
+20 epochs, so part of this gain may be faster learning from the teacher's soft labels; scratch results are single-seed
+and the optimizer differs between w0.5 (AdamW) and w1.0 (SGD).
+
 ### PlantVillage (block split, 20 epochs, same recipes and KD setting, single seed, test top-1)
 
 | Model | Params (M) | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |

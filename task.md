@@ -69,7 +69,7 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 ### Phase 3 — Plots & tables
 - [x] `scripts/plot_results.py` rewritten for v2 and run on the final data -> `pareto_v2.png`, `kd_gain_v2.png`, `heatmap_v2.png`, `alpha_probe_v2.png`, `results/summary_table_v2.csv`
 - [x] Figures: Pareto (test acc vs params, baseline vs KD, + teacher), KD gain vs width, T × α heatmap, alpha probe, summary table
-- [ ] Optional: from-scratch vs pretrained comparison redone on v2 (v1 numbers exist)
+- [x] From-scratch vs pretrained redone on v2 (25 Oct, `scripts\queue_scratch.ps1`, 4 runs, 0.9 h; 20 epochs, same recipes/teacher/KD T2 α0.9, single seed; results `results/results_scratch_v2.csv`, `results/summary_scratch_v2.csv`). Test top-1 baseline -> KD: w0.5 47.44 -> 49.94 (**+2.50**, val +3.64) · w1.0 57.33 -> 62.93 (**+5.60**, val +5.56). Pretrained gains were +0.46 / +0.81, so **KD helps ~5-7x more without pretrained weights** — a strong, clear result (effect size far above seed spread ~0.2 pp). Caveats: single seed; 20 epochs is not converged for from-scratch (part of the KD gain may be faster learning from soft labels); w0.5 uses AdamW and w1.0 SGD (optimizer confound again)
 
 ### Phase 4 — On-device measurement (core of the problem statement) ⏳ do EARLY
 - [x] Separate export env `D:\kd-project\.venv-export` (CPU torch, TF 2.21, onnx2tf 2.6.9, ai-edge-quantizer); `requirements-export.txt` now holds the VERIFIED versions and what failed. Training venv untouched. All downloads went to D: (pip cache `D:\kd-project\cache\pip`, temp `D:\kd-project\tmp`)

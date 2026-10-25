@@ -1,0 +1,5 @@
+run_name,dataset,model,width_mult,kd,teacher_model,temperature,alpha,epochs,image_size,seed,optimizer,lr,weight_decay,label_smoothing,params_m,n_train,n_val,best_epoch,best_val_top1,best_val_top5,test_top1,test_top5,final_test_top1,final_test_top5,pretrained
+student_mbv2_cifar100_w0.5_v2_scratch_adamw1e-3,cifar100,mobilenetv2,0.5,0,,,,20,128,42,adamw,0.001,0.05,0.0,0.8158,45000,5000,20,46.8,76.72,47.44,76.52,47.44,76.52,0
+kd_cifar100_w0.5_v2_scratch_adamw1e-3_T2_a0.9,cifar100,mobilenetv2,0.5,1,resnet50,2.0,0.9,20,128,42,adamw,0.001,0.05,0.0,0.8158,45000,5000,18,50.44,78.78,49.94,79.05,50.0,79.3,0
+student_mbv2_cifar100_w1.0_v2_scratch_sgd0.01,cifar100,mobilenetv2,1.0,0,,,,20,128,42,sgd,0.01,0.0005,0.0,2.352,45000,5000,20,57.4,84.46,57.33,84.1,57.33,84.1,0
+kd_cifar100_w1.0_v2_scratch_sgd0.01_T2_a0.9,cifar100,mobilenetv2,1.0,1,resnet50,2.0,0.9,20,128,42,sgd,0.01,0.0005,0.0,2.352,45000,5000,18,62.96,88.48,62.93,88.01,62.8,88.12,0
