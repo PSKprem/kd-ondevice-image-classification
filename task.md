@@ -80,9 +80,9 @@ Fairness rules: same seed, augmentation, epochs, and starting weights for baseli
 
 | Night | Your session | Overnight (unattended) | Done |
 |---|---|---|---|
-| 1 | Setup env, write code, 1-epoch test | Teacher + 4 baselines | [ ] |
-| 2 | Check results, understand code | T × α sweep | [ ] |
-| 3 | Pick best T/α, review plots | Final KD runs | [ ] |
+| 1 | Setup env, write code, 1-epoch test | Teacher + 4 baselines | [x] |
+| 2 | Check results, understand code | T × α sweep | [x] (v1, then redone as v2) |
+| 3 | Pick best T/α, review plots | Final KD runs | [~] v1 done; v2 Exp 4 queued |
 | 4 | Prepare PlantVillage | PlantVillage + from-scratch | [ ] |
 | 5 | Export TFLite, phone benchmark | — | [ ] |
 | 6 | Plots, tables, report draft | — | [ ] |
@@ -100,6 +100,22 @@ Night 1 progress (24 Oct 2026):
 - [x] Pretrained baselines (24 Oct): w0.5 60.80, w1.4 82.89, MobileNetV3-Small 79.20 (`scripts/pretrained_baselines.ps1`)
 - Student set for main results (all pretrained): MBV2 w0.5 / w1.0 / w1.4 + MobileNetV3-Small; scratch runs = from-scratch comparison
 - Deferred to Night 5: onnx, onnxruntime, onnx-tf, tensorflow
+
+Nights 2–3 (24 Oct 2026) — v1 protocol (best epoch picked on TEST → optimistic, kept only as history in `results/results.csv`):
+- [x] T × α sweep on w0.5, recipe/label-smoothing/seed checks, Exp 4 on all widths (T=2, α=0.9)
+- v1 finding: KD gain ≈ 0 on w0.5 (3 seeds), +1.4 w1.0, +2.0 w1.4, +1.7 MBV3-Small → gain grows with student size (opposite of the naive guess)
+
+v2 protocol (24–25 Oct 2026) — 45k train / 5k val / 10k test; best epoch + T/α/recipe chosen on VAL, test reported only (see README):
+- [x] Teacher ResNet-50 (v2): val 86.06 / test 85.46
+- [x] 8 baselines (4 students × SGD 0.01 / AdamW 1e-3) → best recipe per student in `results/best_recipes_v2.csv`
+      (w0.5 adamw, w1.0 sgd, w1.4 sgd, MBV3-S adamw)
+- [x] Full T × α grid (12 runs) on w1.0 → best T=4, α=0.9 (val 81.86) → `results/best_config_v2.json`, `figures/heatmap_v2.png`
+      (grid spread only ~1.3 pp → differences between neighbouring cells are near seed noise)
+- [ ] Exp 4 v2: `scripts/queue_v2_exp4.ps1` = KD (T=4, α=0.9) on w0.5 / w1.4 / MBV3-S + seeds 0,1 for baseline & KD on w0.5, w1.0
+      → `results/kd_gain_v2.csv` (~2.5 h overnight)
+- [ ] Re-do plots (Pareto, KD gain vs width) from `results_v2.csv`; `plot_results.py` still reads v1 CSV
+- [ ] Early TFLite export test on w1.0 (de-risk Windows export) — do BEFORE PlantVillage
+- Working alone (team split in section 13 is not used). State this honestly in the report/README.
 
 ## 8. Stop & Resume
 

@@ -13,7 +13,7 @@ logs to results/results_v2.csv, checkpoints in D:/kd-project/runs_v2.
 Resumable: finished runs are skipped, interrupted runs continue from last.pt.
 
 Usage (from repo root):
-    .\\.venv\\Scripts\\python.exe -u scripts/queue_v2_exp4.py [--dry-run] [--skip-seeds]
+    .\\.venv\\Scripts\\python.exe -u scripts/queue_v2_exp4.py [--dry-run] [--seeds]
 """
 from __future__ import annotations
 
@@ -35,6 +35,9 @@ MAIN_SEED = 42
 EXTRA_SEEDS = [0, 1]
 SEED_STUDENTS = ["w0.5", "w1.0"]
 ALL_STUDENTS = ["w0.5", "w1.0", "w1.4", "mbv3s"]
+# One common KD setting for all students (simple + defensible: within ~0.4 pp of the w1.0 grid best,
+# no harm on w0.5, and it gave +1.7..+2.0 pp on w1.4 / MBV3-S in v1).
+COMMON_T, COMMON_ALPHA = 2.0, 0.9
 
 
 def with_seed(name: str, seed: int) -> str:
@@ -106,17 +109,17 @@ def summarize(recipes: dict[str, str], T: float, a: float) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description="P25 v2 Experiment 4 queue")
     ap.add_argument("--dry-run", action="store_true", help="print commands, run nothing")
-    ap.add_argument("--skip-seeds", action="store_true", help="only Part A (no extra seeds)")
+    ap.add_argument("--seeds", action="store_true", help="also run Part B (extra seeds 0,1), optional")
     args = ap.parse_args()
     q.DRY_RUN = args.dry_run
 
     if not q.BEST_CFG_JSON.exists():
         sys.exit(f"Missing {q.BEST_CFG_JSON} - run scripts/queue_v2_night1.py first.")
     cfg = json.loads(q.BEST_CFG_JSON.read_text(encoding="utf-8"))
-    recipes, T, a = cfg["recipes"], float(cfg["best_T"]), float(cfg["best_alpha"])
+    recipes, T, a = cfg["recipes"], COMMON_T, COMMON_ALPHA
     if not q.TEACHER_CKPT.exists():
         sys.exit(f"Teacher checkpoint missing: {q.TEACHER_CKPT}")
-    q.log(f"Using best (T, alpha) = ({T:g}, {a:g}); recipes = {recipes}")
+    q.log(f"Using common (T, alpha) = ({T:g}, {a:g}); recipes = {recipes}")
 
     t0 = time.time()
     q.log("===== PART A: KD with best (T, alpha) on every student, seed 42 =====")
@@ -124,7 +127,7 @@ def main() -> None:
         if tag in recipes:
             run_pair(tag, recipes[tag], T, a, MAIN_SEED)
 
-    if not args.skip_seeds:
+    if args.seeds:
         q.log(f"===== PART B: seed check {EXTRA_SEEDS} on {SEED_STUDENTS} =====")
         for seed in EXTRA_SEEDS:
             for tag in SEED_STUDENTS:
