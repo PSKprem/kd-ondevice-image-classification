@@ -1,0 +1,27 @@
+# P25 — ONNX / TFLite EXPORT environment (separate from requirements.txt).
+#
+# Why separate: tensorflow 2.18 / onnx-tf require numpy<2.1, but the training env
+# uses numpy 2.5.2. Installing these into the training .venv would downgrade numpy
+# and can break training. Use a second venv (e.g. .venv-export), WSL, or Colab:
+#
+#   py -3.12 -m venv .venv-export
+#   .\.venv-export\Scripts\Activate.ps1
+#   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements-export.txt
+#
+# (scripts/export.py also needs torch, torchvision, timm, pyyaml to rebuild the model
+#  from a checkpoint; the CPU build of torch is enough for export.)
+#
+# NOTE: versions below are the original plan and have NOT been verified together.
+# onnx-tf is unmaintained and may not work with tensorflow 2.18 / Keras 3. If the
+# Task 10 export test fails, try onnx2tf or ai-edge-torch instead and update this file.
+
+numpy<2.1
+timm==1.0.11
+huggingface_hub==0.26.2
+pyyaml==6.0.2
+
+onnx==1.17.0
+onnxruntime==1.20.1
+onnx-tf==1.10.0
+tensorflow==2.18.0            # provides the TFLite converter

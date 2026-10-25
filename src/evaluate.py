@@ -29,6 +29,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--ckpt", required=True, help="path to a checkpoint (best.pt/last.pt)")
     p.add_argument("--config", required=True, help="config describing data + model")
     p.add_argument("--width-mult", type=float, default=None)
+    p.add_argument("--split", choices=["val", "test"], default="val",
+                   help="which split to score (default val; use test only for final numbers)")
     p.add_argument("--smoke-test", action="store_true")
     return p.parse_args()
 
@@ -53,19 +55,20 @@ def main() -> None:
     cfg = merge_overrides(cfg, {"width_mult": args.width_mult})
     device = get_device()
 
-    _, test_loader, num_classes = build_dataloaders(cfg, smoke_test=args.smoke_test)
+    _, val_loader, test_loader, num_classes = build_dataloaders(cfg, smoke_test=args.smoke_test)
+    loader = val_loader if args.split == "val" else test_loader
     model = build_model(cfg["model"], num_classes,
                         width_mult=float(cfg.get("width_mult", 1.0)),
                         pretrained=False)
     state = load_checkpoint(args.ckpt, model, map_location=device)
     model.to(device)
 
-    top1, top5 = evaluate(model, test_loader, device)
+    top1, top5 = evaluate(model, loader, device)
     params_m = count_params_millions(model)
     print(f"[P25] ckpt={args.ckpt}")
     print(f"[P25] params={params_m:.2f}M  (trained {state.epoch} epochs, "
-          f"best@1={state.best_acc:.2f})")
-    print(f"[P25] eval  top1={top1:.2f}  top5={top5:.2f}")
+          f"best_val@1={state.best_acc:.2f})")
+    print(f"[P25] eval[{args.split}]  top1={top1:.2f}  top5={top5:.2f}")
 
 
 if __name__ == "__main__":

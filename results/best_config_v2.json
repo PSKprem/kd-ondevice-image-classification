@@ -1,0 +1,28 @@
+{
+  "selection": "best_val_top1 (val split, never test)",
+  "recipes": {
+    "w0.5": "adamw1e-3",
+    "w1.0": "sgd0.01",
+    "w1.4": "sgd0.01",
+    "mbv3s": "adamw1e-3"
+  },
+  "sweep_student": "w1.0",
+  "sweep_runs_finished": 12,
+  "best_T": 4.0,
+  "best_alpha": 0.9,
+  "best_val_top1": 81.86,
+  "val_grid": {
+    "T1_a0.1": 80.52,
+    "T1_a0.5": 80.56,
+    "T1_a0.9": 80.78,
+    "T2_a0.1": 80.98,
+    "T2_a0.5": 81.5,
+    "T2_a0.9": 81.52,
+    "T4_a0.1": 81.18,
+    "T4_a0.5": 81.74,
+    "T4_a0.9": 81.86,
+    "T8_a0.1": 81.18,
+    "T8_a0.5": 81.3,
+    "T8_a0.9": 81.54
+  }
+}

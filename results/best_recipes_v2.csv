@@ -1,0 +1,5 @@
+student,val_sgd0.01,val_adamw1e-3,best_recipe,best_val_top1,test_top1_of_best,run_name
+w0.5,61.26,74.90,adamw1e-3,74.90,74.58,student_mbv2_cifar100_w0.5_v2_adamw1e-3
+w1.0,80.74,80.06,sgd0.01,80.74,80.86,student_mbv2_cifar100_w1.0_v2_sgd0.01
+w1.4,82.58,81.98,sgd0.01,82.58,82.36,student_mbv2_cifar100_w1.4_v2_sgd0.01
+mbv3s,77.92,78.32,adamw1e-3,78.32,78.34,student_mbv3s_cifar100_v2_adamw1e-3

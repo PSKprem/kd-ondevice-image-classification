@@ -26,7 +26,21 @@ pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorc
 pip install -r requirements.txt
 ```
 
+`requirements.txt` is the **training** env only. ONNX / TFLite export packages are in
+`requirements-export.txt` and must go in a separate venv (or WSL / Colab): tensorflow needs
+`numpy<2.1`, which conflicts with the numpy used for training.
+
 Data and checkpoints live under `D:\kd-project\` (kept **out** of git — see `.gitignore`).
+v2 runs (val-based protocol, below) write to `D:\kd-project\runs_v2\` and `results/results_v2.csv`.
+
+## Evaluation protocol (v2)
+
+CIFAR-100's 50k train set is split once into **45k train / 5k val** (stratified, 50 val images
+per class, fixed `split_seed: 42` independent of the training seed). The best epoch is chosen on
+**val**. After training, the official 10k **test** set is evaluated on `best.pt` (`test_top1`,
+the headline number) and on the last-epoch model (`final_test_top1`, reported only).
+`results/results_v2.csv` columns: `best_val_top1`, `test_top1`, `final_test_top1` (+ top-5, `best_epoch`, recipe).
+The older `results/results.csv` (v1) chose the best epoch on the test set and is kept only as history.
 
 ## Usage
 
@@ -38,12 +52,12 @@ python -m src.train --config configs/teacher.yaml
 python -m src.train --config configs/student.yaml --width-mult 0.5
 
 # Train a KD student (needs a trained teacher checkpoint)
-python -m src.train --config configs/kd.yaml --teacher-ckpt D:/kd-project/runs/teacher_resnet50_cifar100/best.pt
+python -m src.train --config configs/kd.yaml --teacher-ckpt D:/kd-project/runs_v2/teacher_resnet50_cifar100_v2/best.pt
 
-# Evaluate a checkpoint
-python -m src.evaluate --ckpt D:/kd-project/runs/<run>/best.pt --config configs/student.yaml
+# Evaluate a checkpoint (default split = val; pass --split test only for final numbers)
+python -m src.evaluate --ckpt D:/kd-project/runs_v2/<run>/best.pt --config configs/student.yaml
 
-# Quick 1-epoch smoke test (tiny subset, CPU/GPU)
+# Quick 1-epoch smoke test (tiny subset; row goes to <run_dir>/smoke_results.csv, not the repo CSV)
 python -m src.train --config configs/student.yaml --smoke-test
 ```
 

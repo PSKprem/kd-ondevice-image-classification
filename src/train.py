@@ -21,6 +21,7 @@ from .data import build_dataloaders
 from .kd_loss import KDLoss
 from .models import build_model
 from .utils import (
+    RESULTS_FIELDS_V2,
     AverageMeter,
     accuracy,
     append_result,
@@ -167,10 +168,12 @@ def main() -> None:
           f"wd={cfg.get('weight_decay')} warmup={cfg.get('warmup_epochs')} "
           f"label_smoothing={cfg.get('label_smoothing')} epochs={cfg.get('epochs')}")
 
-    # ---- data ----
-    train_loader, test_loader, num_classes = build_dataloaders(cfg, smoke_test=smoke)
+    # ---- data (train / val / test; test is touched only after training) ----
+    train_loader, val_loader, test_loader, num_classes = build_dataloaders(
+        cfg, smoke_test=smoke)
+    n_train, n_val = len(train_loader.dataset), len(val_loader.dataset)
     print(f"[P25] dataset={cfg['dataset']} classes={num_classes} "
-          f"train_batches={len(train_loader)} test_batches={len(test_loader)}")
+          f"train={n_train} val={n_val} test={len(test_loader.dataset)}")
 
     # ---- model ----
     model = build_model(cfg["model"], num_classes,
@@ -210,31 +213,30 @@ def main() -> None:
     last_path, best_path = run_dir / "last.pt", run_dir / "best.pt"
 
     start_epoch, best_acc = 0, 0.0
+    if not args.resume and not smoke and (last_path.exists() or best_path.exists()):
+        raise SystemExit(f"[P25] {run_dir} already has checkpoints. Use --resume to continue "
+                         "it, or pick a new --run-name (refusing to overwrite).")
     if args.resume and last_path.exists():
         state = load_checkpoint(last_path, model, optimizer, scheduler, scaler,
                                 map_location=device)
         start_epoch, best_acc = state.epoch, state.best_acc
         print(f"[P25] resumed from epoch {start_epoch} (best_acc={best_acc:.2f})")
 
-    # ---- train loop ----
+    # ---- train loop: the best epoch is selected on VAL only ----
     epochs = int(cfg["epochs"])
-    final_top1 = final_top5 = best_top5 = 0.0
     for epoch in range(start_epoch, epochs):
         tr_loss, tr_top1, _ = run_epoch(
             model, train_loader, criterion, is_kd, teacher, optimizer,
             scheduler, scaler, device, amp, train=True)
         va_loss, va_top1, va_top5 = run_epoch(
-            model, test_loader, criterion, is_kd, teacher, None,
+            model, val_loader, criterion, is_kd, teacher, None,
             None, scaler, device, amp, train=False)
-        final_top1, final_top5 = va_top1, va_top5
         lr_now = optimizer.param_groups[0]["lr"]
         print(f"[P25] epoch {epoch+1}/{epochs} lr={lr_now:.5f} "
               f"train_loss={tr_loss:.3f} train@1={tr_top1:.2f} "
               f"val_loss={va_loss:.3f} val@1={va_top1:.2f} val@5={va_top5:.2f}")
 
-        is_best = va_top1 > best_acc
-        if is_best:
-            best_top5 = va_top5
+        is_best = va_top1 > best_acc or not best_path.exists()
         best_acc = max(best_acc, va_top1)
         if (epoch + 1) % int(cfg.get("save_every", 1)) == 0 or epoch + 1 == epochs:
             save_checkpoint(last_path, model, optimizer, scheduler, scaler,
@@ -243,23 +245,51 @@ def main() -> None:
             save_checkpoint(best_path, model, optimizer, scheduler, scaler,
                             epoch + 1, best_acc, cfg)
 
-    print(f"[P25] done. best val@1={best_acc:.2f}  (checkpoints in {run_dir})")
+    # ---- test set: touched only here, after training is over ----
+    # (1) last-epoch model -> final_test_*  (reported only, never used for selection)
+    _, final_test_top1, final_test_top5 = run_epoch(
+        model, test_loader, criterion, is_kd, teacher, None, None, scaler, device, amp,
+        train=False)
+    # (2) best-by-val checkpoint -> test_*  (the headline number, evaluated once)
+    best_state = load_checkpoint(best_path, model, map_location=device)
+    _, val_chk_top1, best_val_top5 = run_epoch(
+        model, val_loader, criterion, is_kd, teacher, None, None, scaler, device, amp,
+        train=False)
+    if abs(val_chk_top1 - best_state.best_acc) > 0.1:
+        print(f"[P25] WARNING: val re-check {val_chk_top1:.2f} differs from saved "
+              f"best {best_state.best_acc:.2f}")
+    _, test_top1, test_top5 = run_epoch(
+        model, test_loader, criterion, is_kd, teacher, None, None, scaler, device, amp,
+        train=False)
 
-    # ---- log one result row (skip for smoke tests) ----
-    if not smoke:
-        append_result(cfg["results_csv"], {
-            "run_name": cfg["run_name"], "dataset": cfg["dataset"],
-            "model": cfg["model"], "width_mult": cfg.get("width_mult", 1.0),
-            "kd": int(bool(cfg.get("kd", False))),
-            "teacher_model": cfg.get("teacher_model", ""),
-            "temperature": cfg.get("temperature", ""), "alpha": cfg.get("alpha", ""),
-            "epochs": epochs, "image_size": cfg["image_size"],
-            "seed": cfg.get("seed", 42), "params_m": round(params_m, 4),
-            "best_top1": round(best_acc, 4), "best_top5": round(best_top5, 4),
-            "final_top1": round(final_top1, 4), "final_top5": round(final_top5, 4),
-            "pretrained": int(bool(cfg.get("pretrained", True))),
-        })
-        print(f"[P25] appended result to {cfg['results_csv']}")
+    print(f"[P25] done. best epoch={best_state.epoch} best_val@1={best_state.best_acc:.2f}  "
+          f"test@1(best)={test_top1:.2f}  final_test@1(last epoch)={final_test_top1:.2f}  "
+          f"(checkpoints in {run_dir})")
+
+    # ---- log one result row (smoke tests go to a throw-away CSV in the run dir) ----
+    csv_path = run_dir / "smoke_results.csv" if smoke else cfg["results_csv"]
+    append_result(csv_path, {
+        "run_name": cfg["run_name"], "dataset": cfg["dataset"],
+        "model": cfg["model"], "width_mult": cfg.get("width_mult", 1.0),
+        "kd": int(bool(cfg.get("kd", False))),
+        "teacher_model": cfg.get("teacher_model", "") if cfg.get("kd", False) else "",
+        "temperature": cfg.get("temperature", "") if cfg.get("kd", False) else "",
+        "alpha": cfg.get("alpha", "") if cfg.get("kd", False) else "",
+        "epochs": epochs, "image_size": cfg["image_size"],
+        "seed": cfg.get("seed", 42),
+        "optimizer": cfg.get("optimizer", ""), "lr": cfg.get("lr", ""),
+        "weight_decay": cfg.get("weight_decay", ""),
+        "label_smoothing": cfg.get("label_smoothing", ""),
+        "params_m": round(params_m, 4), "n_train": n_train, "n_val": n_val,
+        "best_epoch": best_state.epoch,
+        "best_val_top1": round(best_state.best_acc, 4),
+        "best_val_top5": round(best_val_top5, 4),
+        "test_top1": round(test_top1, 4), "test_top5": round(test_top5, 4),
+        "final_test_top1": round(final_test_top1, 4),
+        "final_test_top5": round(final_test_top5, 4),
+        "pretrained": int(bool(cfg.get("pretrained", True))),
+    }, fields=RESULTS_FIELDS_V2)
+    print(f"[P25] appended result to {csv_path}")
 
 
 if __name__ == "__main__":

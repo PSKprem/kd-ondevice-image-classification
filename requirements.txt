@@ -1,20 +1,24 @@
 # P25 — Knowledge Distillation for On-Device Image Classification
-# Python 3.12 environment (3.12.5 verified; 3.13+/3.14 lack wheels for torch 2.5.1 / tensorflow 2.18)
+# TRAINING environment. Python 3.12 (3.12.5 verified; 3.13+/3.14 lack wheels for torch 2.5.1).
+#
+# ONNX / TFLite export packages live in requirements-export.txt on purpose:
+# tensorflow / onnx-tf need numpy<2.1, which conflicts with the numpy pinned here.
+# Install that file in a SEPARATE venv (or WSL / Colab), never into this one.
 #
 # IMPORTANT (PyTorch + CUDA):
-#   Install the CUDA build of PyTorch separately so pip pulls GPU wheels, e.g.:
-#     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#   Install the CUDA build of PyTorch first so pip pulls GPU wheels:
+#     pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
 #   Then install the rest with:
 #     pip install -r requirements.txt
-#   (Pin the torch/torchvision versions below to whatever the CUDA index provides.)
 
 # ---- Deep learning core ----
 torch==2.5.1
 torchvision==0.20.1
 timm==1.0.11
+huggingface_hub==0.26.2      # pinned: 2.x broke timm's pretrained-weight download
 
 # ---- Numerics / data handling ----
-numpy==2.5.2                 # verified with torch 2.5.1+cu121 (may need <2.1 for tensorflow/onnx-tf at export time)
+numpy==2.5.2                 # verified with torch 2.5.1+cu121
 pandas==2.2.3
 
 # ---- Plotting / progress / config ----
@@ -26,16 +30,6 @@ pyyaml==6.0.2
 thop==0.1.1.post2209072238
 # fvcore==0.1.5.post20221221   # alternative to thop (uncomment if preferred)
 
-# ---- Export to ONNX / TFLite ----
-# NOT installed yet (deferred to Night 5; version-fragile on Windows, fallback Colab/WSL)
-onnx==1.17.0
-onnxruntime==1.20.1
-onnx-tf==1.10.0
-tensorflow==2.18.0            # provides the TFLite converter
-
-# ---- Dataset / model hub access ----
-kaggle==1.6.17               # PlantVillage download
-huggingface_hub==0.26.2      # share final models
-
-# ---- Notebook (optional analysis) ----
-jupyter==1.1.1
+# ---- Optional, NOT installed yet (install when the task needs them) ----
+# kaggle==1.6.17               # Task 13: PlantVillage download
+# jupyter==1.1.1               # optional analysis notebook

@@ -174,14 +174,43 @@ RESULTS_FIELDS = [
 ]
 
 
-def append_result(csv_path: str | os.PathLike, row: dict[str, Any]) -> None:
-    """Append one result row, writing a header if the file is new."""
+# v2 protocol (results/results_v2.csv): the best epoch is chosen on a held-out VAL
+# split; the official TEST set is evaluated once on that best checkpoint.
+#   best_val_top1/5 : val accuracy of the selected (best-by-val) checkpoint
+#   test_top1/5     : test accuracy of that same best-by-val checkpoint (headline number)
+#   final_test_top1/5: test accuracy of the LAST-epoch model (reported only, never used
+#                      for selection)
+RESULTS_FIELDS_V2 = [
+    "run_name", "dataset", "model", "width_mult", "kd", "teacher_model",
+    "temperature", "alpha", "epochs", "image_size", "seed",
+    "optimizer", "lr", "weight_decay", "label_smoothing",
+    "params_m", "n_train", "n_val", "best_epoch",
+    "best_val_top1", "best_val_top5",
+    "test_top1", "test_top5", "final_test_top1", "final_test_top5",
+    "pretrained",
+]
+
+
+def append_result(csv_path: str | os.PathLike, row: dict[str, Any],
+                  fields: list[str] | None = None) -> None:
+    """Append one result row, writing a header if the file is new.
+
+    `fields` defaults to the v1 schema. If the file already exists with a different
+    header, raise instead of silently mixing schemas (old vs v2 results).
+    """
+    fields = list(fields) if fields is not None else RESULTS_FIELDS
     csv_path = Path(csv_path)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
-    exists = csv_path.exists()
-    safe = {k: row.get(k, "") for k in RESULTS_FIELDS}
+    exists = csv_path.exists() and csv_path.stat().st_size > 0
+    if exists:
+        with open(csv_path, "r", newline="", encoding="utf-8") as f:
+            header = next(csv.reader(f), [])
+        if header != fields:
+            raise ValueError(f"{csv_path} has a different column schema than the one being "
+                             "written; use a separate CSV file instead of mixing schemas.")
+    safe = {k: row.get(k, "") for k in fields}
     with open(csv_path, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=RESULTS_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=fields)
         if not exists:
             writer.writeheader()
         writer.writerow(safe)
