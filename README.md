@@ -138,8 +138,8 @@ Per-seed paired gains (seeds 42 / 0 / 1): w0.5 +0.45 / +0.44 / +0.49, w1.0 +0.85
 positive for every seed. w1.4 and MobileNetV3-Small are still single-seed. The gain grows with width inside
 MobileNetV2, but optimizer (AdamW for w0.5 / MBV3-S, SGD for w1.0 / w1.4, each chosen on val) and architecture are
 mixed with size, so size alone cannot be credited. The final tables and figures are produced by
-`scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency and PlantVillage
-results are still to come (see `task.md`).
+`scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still
+to come (see `task.md`).
 
 ### PlantVillage (block split, 20 epochs, same recipes and KD setting, single seed, test top-1)
 
@@ -151,9 +151,7 @@ results are still to come (see `task.md`).
 
 The dataset is saturated (~99%): with 10,886 test images, +0.05 pp is about 5 images and +0.31 pp about 34, so there is
 no clear KD effect here. The w1.0 KD student even exceeds its teacher, which together with the approximate block split
-(possible near-duplicate leakage) means PlantVillage cannot separate the models well. The final tables and figures are produced by `scripts/plot_results.py`
-(`results/summary_table_v2.csv`, `results/figures/`). On-device latency and PlantVillage results are still to come
-(see `task.md`).
+(possible near-duplicate leakage) means PlantVillage cannot separate the models well.
 
 ## Repository layout
 
