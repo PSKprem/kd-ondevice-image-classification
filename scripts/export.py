@@ -71,6 +71,7 @@ def main() -> None:
     ap.add_argument("--ckpt", required=True)
     ap.add_argument("--config", required=True)
     ap.add_argument("--width-mult", type=float, default=None)
+    ap.add_argument("--model", default=None, help="override model name (e.g. mobilenetv3_small)")
     ap.add_argument("--out", required=True, help="output directory")
     ap.add_argument("--onnx-only", action="store_true")
     args = ap.parse_args()
@@ -80,7 +81,7 @@ def main() -> None:
     image_size = int(cfg["image_size"])
     num_classes = NUM_CLASSES.get(str(cfg["dataset"]).lower(), 100)
 
-    model = build_model(cfg["model"], num_classes, width_mult=width, pretrained=False)
+    model = build_model(args.model or cfg["model"], num_classes, width_mult=width, pretrained=False)
     load_checkpoint(args.ckpt, model, map_location="cpu")
     model.eval()
 

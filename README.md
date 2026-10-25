@@ -141,6 +141,21 @@ mixed with size, so size alone cannot be credited. The final tables and figures 
 `scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still
 to come (see `task.md`).
 
+### Low-data study (CIFAR-100, pretrained, test top-1, 20 epochs, single seed, KD T=2 alpha=0.9)
+
+| Student | Train data | Baseline | KD | Gain (pp) |
+|---|---|---|---|---|
+| MobileNetV2 w1.0 (SGD) | 10% | 65.81 | 66.93 | +1.12 |
+| MobileNetV2 w1.0 (SGD) | 25% | 72.72 | 74.75 | +2.03 |
+| MobileNetV2 w1.0 (SGD) | 100% | 80.86 | 81.71 | +0.85 |
+| MobileNetV2 w0.5 (AdamW) | 10% | 56.44 | 56.22 | -0.22 |
+| MobileNetV2 w0.5 (AdamW) | 25% | 64.87 | 64.97 | +0.10 |
+| MobileNetV2 w0.5 (AdamW) | 100% | 74.58 | 75.03 | +0.45 |
+
+For w1.0, KD helps more with less data (+2.03 at 25% vs +0.85 at 100%), but not monotonically (10% is lower). For the
+tiny w0.5 student KD does not help when data is scarce (-0.22 at 10%). So "KD helps most with little data" is not a
+general rule here; the two students also differ in optimizer. The teacher was trained on the full data.
+
 ### Optimizer check (CIFAR-100, pretrained, seed 42, test top-1 KD gain in pp, KD T=2 alpha=0.9)
 
 | Student | SGD 0.01 baseline -> KD (gain) | AdamW 1e-3 baseline -> KD (gain) |

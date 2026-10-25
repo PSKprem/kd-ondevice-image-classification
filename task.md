@@ -92,7 +92,7 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - Interpretation (be honest in the report): the dataset is saturated (~99%). The test set has 10,886 images, so +0.05 is ~5 images (noise) and +0.31 is ~34 images (borderline, single seed). The w1.0 KD student (99.27) even beats its teacher (99.05), which together with the approximate block split (near-duplicate leakage, see above) suggests PlantVillage cannot separate the models well -> do NOT claim KD helps here; say "no clear effect"
 
 ### Phase 6 — Optional (only if time remains)
-- [ ] Low-data study (10% / 25% / 100% training data) on one student
+- [x] Low-data study done 25 Oct (`scripts\queue_lowdata.ps1`, 8 runs, 0.7 h; `--train-fraction`, nested stratified subsets of the 45k train split; 20 epochs, same teacher trained on the full data, single seed; `results/results_lowdata_v2.csv`, `results/summary_lowdata_v2.csv`). KD gain on test (pp) at 10% / 25% / 100% data: **w1.0 (SGD) +1.12 / +2.03 / +0.85** · **w0.5 (AdamW) -0.22 / +0.10 / +0.45**. Mixed result: for w1.0 KD helps more with less data (but 10% < 25%, not monotone); for w0.5 it is the opposite (KD does not help the tiny student when data is scarce). Do not claim "KD helps most with little data" in general; w0.5 vs w1.0 also differ in optimizer. Single seed
 - [ ] Extra seeds for more students
 
 ### Phase 7 — Report & GitHub

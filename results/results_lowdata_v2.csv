@@ -1,0 +1,9 @@
+run_name,dataset,model,width_mult,kd,teacher_model,temperature,alpha,epochs,image_size,seed,optimizer,lr,weight_decay,label_smoothing,params_m,n_train,n_val,best_epoch,best_val_top1,best_val_top5,test_top1,test_top5,final_test_top1,final_test_top5,pretrained
+student_mbv2_cifar100_w0.5_v2_frac10_adamw1e-3,cifar100,mobilenetv2,0.5,0,,,,20,128,42,adamw,0.001,0.05,0.0,0.8158,4500,5000,18,55.24,85.74,56.44,86.04,56.43,86.0,1
+kd_cifar100_w0.5_v2_frac10_adamw1e-3_T2_a0.9,cifar100,mobilenetv2,0.5,1,resnet50,2.0,0.9,20,128,42,adamw,0.001,0.05,0.0,0.8158,4500,5000,18,55.08,86.28,56.22,86.6,56.26,86.54,1
+student_mbv2_cifar100_w1.0_v2_frac10_sgd0.01,cifar100,mobilenetv2,1.0,0,,,,20,128,42,sgd,0.01,0.0005,0.0,2.352,4500,5000,17,65.76,91.6,65.81,91.37,65.9,91.38,1
+kd_cifar100_w1.0_v2_frac10_sgd0.01_T2_a0.9,cifar100,mobilenetv2,1.0,1,resnet50,2.0,0.9,20,128,42,sgd,0.01,0.0005,0.0,2.352,4500,5000,16,67.22,91.78,66.93,91.58,66.8,91.54,1
+student_mbv2_cifar100_w0.5_v2_frac25_adamw1e-3,cifar100,mobilenetv2,0.5,0,,,,20,128,42,adamw,0.001,0.05,0.0,0.8158,11200,5000,16,64.22,91.2,64.87,90.87,65.09,90.98,1
+kd_cifar100_w0.5_v2_frac25_adamw1e-3_T2_a0.9,cifar100,mobilenetv2,0.5,1,resnet50,2.0,0.9,20,128,42,adamw,0.001,0.05,0.0,0.8158,11200,5000,20,65.18,91.12,64.97,91.34,64.97,91.34,1
+student_mbv2_cifar100_w1.0_v2_frac25_sgd0.01,cifar100,mobilenetv2,1.0,0,,,,20,128,42,sgd,0.01,0.0005,0.0,2.352,11200,5000,16,72.3,94.0,72.72,94.25,72.83,94.23,1
+kd_cifar100_w1.0_v2_frac25_sgd0.01_T2_a0.9,cifar100,mobilenetv2,1.0,1,resnet50,2.0,0.9,20,128,42,sgd,0.01,0.0005,0.0,2.352,11200,5000,18,73.84,94.32,74.75,94.34,74.71,94.34,1

@@ -41,7 +41,10 @@ def main() -> None:
     ap.add_argument("--config", required=True)
     ap.add_argument("--ckpt", default=None, help="PyTorch checkpoint to compare predictions with")
     ap.add_argument("--width-mult", type=float, default=None)
+    ap.add_argument("--model", default=None, help="override model name (e.g. mobilenetv3_small)")
     ap.add_argument("--n", type=int, default=2000, help="number of test images (0 = all)")
+    ap.add_argument("--tag", default=None, help="label for the --csv row")
+    ap.add_argument("--csv", default=None, help="append one result row to this CSV")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -57,7 +60,7 @@ def main() -> None:
     torch_model = None
     if args.ckpt:
         width = args.width_mult if args.width_mult is not None else float(cfg.get("width_mult", 1.0))
-        torch_model = build_model(cfg["model"], num_classes, width_mult=width, pretrained=False)
+        torch_model = build_model(args.model or cfg["model"], num_classes, width_mult=width, pretrained=False)
         load_checkpoint(args.ckpt, torch_model, map_location="cpu")
         torch_model.eval()
 
@@ -85,6 +88,17 @@ def main() -> None:
     if torch_model is not None:
         msg += f" | agreement with PyTorch = {100 * agree / n:.2f}%"
     print(msg + f" ({time.time() - t0:.0f}s)")
+    if args.csv:
+        import csv
+        path = Path(args.csv)
+        new = not path.exists()
+        with open(path, "a", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            if new:
+                w.writerow(["tag", "tflite", "size_mib", "n_images", "tflite_top1", "agreement_with_pytorch"])
+            w.writerow([args.tag or Path(args.tflite).parent.name, Path(args.tflite).name,
+                        f"{Path(args.tflite).stat().st_size / 2**20:.2f}", n, f"{100 * correct / n:.2f}",
+                        f"{100 * agree / n:.2f}" if torch_model is not None else ""])
 
 
 if __name__ == "__main__":
