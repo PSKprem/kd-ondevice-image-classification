@@ -152,6 +152,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="P25 v2 Experiment 4 queue")
     ap.add_argument("--dry-run", action="store_true", help="print commands, run nothing")
     ap.add_argument("--seeds", action="store_true", help="also run Part B (extra seeds 0,1), optional")
+    ap.add_argument("--seed-students", nargs="+", choices=ALL_STUDENTS, default=SEED_STUDENTS,
+                    help="students for Part B (default: w0.5 w1.0)")
     ap.add_argument("--probe", action="store_true", help="also run the alpha-sensitivity probe (Part C)")
     args = ap.parse_args()
     q.DRY_RUN = args.dry_run
@@ -171,9 +173,9 @@ def main() -> None:
             run_pair(tag, recipes[tag], T, a, MAIN_SEED)
 
     if args.seeds:
-        q.log(f"===== PART B: seed check {EXTRA_SEEDS} on {SEED_STUDENTS} =====")
+        q.log(f"===== PART B: seed check {EXTRA_SEEDS} on {args.seed_students} =====")
         for seed in EXTRA_SEEDS:
-            for tag in SEED_STUDENTS:
+            for tag in args.seed_students:
                 if tag in recipes:
                     run_pair(tag, recipes[tag], T, a, seed)
 

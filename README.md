@@ -135,7 +135,8 @@ Phone latency is measured with TFLite `benchmark_model` through `adb` (see `scri
 | MobileNetV2 w1.4 | 4.50 | 82.36 | 83.61 | +1.25 |
 
 Gains are small (about 0.5–1.7 pp) and from one seed; differences of this size can be seed noise, so they are
-indicative only. The final tables and figures are produced by `scripts/plot_results.py`
+indicative only. The gain also grows with width inside MobileNetV2, but optimizer (AdamW for w0.5 / MBV3-S, SGD for
+w1.0 / w1.4, each chosen on val) and architecture are mixed with size, so size alone cannot be credited. The final tables and figures are produced by `scripts/plot_results.py`
 (`results/summary_table_v2.csv`, `results/figures/`). On-device latency and PlantVillage results are still to come
 (see `task.md`).
 
