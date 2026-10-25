@@ -75,12 +75,12 @@ Large neural networks give the best accuracy but are too big and slow for phones
 
 | # | Objective (from the project sheet) | Where addressed |
 |---|---|---|
-| O1 | Train a ResNet-50 teacher | §6.1 |
-| O2 | Train a MobileNetV2 student normally (baseline, no KD) | §6.2 |
-| O3 | Train the student with knowledge distillation and compare with the baseline | §6.3, §6.4 |
-| O4 | Vary the temperature *T* and weight *α* | §6.3, §6.5 |
-| O5 | Measure latency and model size (on a phone) | §7 — latency on the phone, file sizes; the accuracy of the exported models was additionally checked with the TFLite interpreter on a laptop (extra, see §9) |
-| O6 (research angle) | Analyse the accuracy-vs-size Pareto curve: **when does KD help the most?** | §6.4, §6.6–6.9, §8 |
+| O1 | Train a ResNet-50 teacher | Section 6.1 |
+| O2 | Train a MobileNetV2 student normally (baseline, no KD) | Section 6.2 |
+| O3 | Train the student with knowledge distillation and compare with the baseline | Section 6.3, Section 6.4 |
+| O4 | Vary the temperature *T* and weight *α* | Section 6.3, Section 6.5 |
+| O5 | Measure latency and model size (on a phone) | Section 7 — latency on the phone, file sizes; the accuracy of the exported models was additionally checked with the TFLite interpreter on a laptop (extra, see Section 9) |
+| O6 (research angle) | Analyse the accuracy-vs-size Pareto curve: **when does KD help the most?** | Section 6.4, Section 6.6–6.9, Section 8 |
 
 ### 2.3 Contributions
 
@@ -98,17 +98,17 @@ suggested dataset *"CIFAR-100 or PlantVillage"*; research angle *"Accuracy-vs-mo
 
 | Requirement in the brief | Status | Note |
 |---|---|---|
-| ResNet-50 teacher | Done | §6.1 |
-| MobileNetV2 student, baseline (no KD) | Done | §6.2; three widths (0.5 / 1.0 / 1.4) |
-| MobileNetV2 student with KD, compared with the baseline | Done | §6.4, three seeds |
-| Vary temperature T and α | Done | §6.3 (4 × 3 grid), §6.5 (α probe) |
-| Datasets: CIFAR-100 *or* PlantVillage | Done for both | CIFAR-100 main, PlantVillage secondary (approximate split, §4.4) |
-| Measure latency and model size (project sheet: *"measure latency/size"*) | Done | latency on the phone (§7.5), file sizes (§7.3), parameters (§4.2) |
-| Extra (not required by the sheet): accuracy of the exported models | Done, on a laptop | every exported `.tflite` was evaluated on the full 10 000-image test set with the TFLite interpreter; the phone itself was used for latency (§9) |
-| Accuracy-vs-model-size Pareto curve | Done | accuracy vs parameters (§6.4) and accuracy vs file size, FP32 and INT8 (§7.6) |
-| Answer *when does KD help the most?* | Done | §6.4–6.8 and §8 |
-| Reference papers (Hinton 2015, Sandler 2018) | Done | §3, §12 |
-| Deliverables: report and GitHub repository | Report: this document; repository: yes (private) | §11 |
+| ResNet-50 teacher | Done | Section 6.1 |
+| MobileNetV2 student, baseline (no KD) | Done | Section 6.2; three widths (0.5 / 1.0 / 1.4) |
+| MobileNetV2 student with KD, compared with the baseline | Done | Section 6.4, three seeds |
+| Vary temperature T and α | Done | Section 6.3 (4 × 3 grid), Section 6.5 (α probe) |
+| Datasets: CIFAR-100 *or* PlantVillage | Done for both | CIFAR-100 main, PlantVillage secondary (approximate split, Section 4.4) |
+| Measure latency and model size (project sheet: *"measure latency/size"*) | Done | latency on the phone (Section 7.5), file sizes (Section 7.3), parameters (Section 4.2) |
+| Extra (not required by the sheet): accuracy of the exported models | Done, on a laptop | every exported `.tflite` was evaluated on the full 10 000-image test set with the TFLite interpreter; the phone itself was used for latency (Section 9) |
+| Accuracy-vs-model-size Pareto curve | Done | accuracy vs parameters (Section 6.4) and accuracy vs file size, FP32 and INT8 (Section 7.6) |
+| Answer *when does KD help the most?* | Done | Section 6.4–6.8 and Section 8 |
+| Reference papers (Hinton 2015, Sandler 2018) | Done | Section 3, Section 12 |
+| Deliverables: report and GitHub repository | Report: this document; repository: yes (private) | Section 11 |
 
 Additions beyond the brief: a second student architecture (MobileNetV3-Small), controls for optimizer, initialization and data size, the INT8 diagnosis, and the three-seed statistics.
 
@@ -183,7 +183,7 @@ This protocol was adopted after an earlier version was found to be optimistic (A
 * **PlantVillage.** The dataset has no leaf identifier in the file names, so exact per-leaf grouping is impossible. Each class
   is cut into blocks of 20 consecutive image ids and whole blocks are assigned to train / validation / test (≈70 / 10 / 20 %). Neighbouring ids
   are measurably more similar than random images of the same class (mean absolute pixel difference 32.4 vs 39.0 on 24×24 thumbnails of 200 sampled pairs),
-  so this reduces — but cannot remove — near-duplicate leakage (see §9).
+  so this reduces — but cannot remove — near-duplicate leakage (see Section 9).
 
 ### 4.5 Which numbers are "measured" and which are "derived"
 
@@ -241,7 +241,7 @@ Each student was trained with both recipes (seed 42); the recipe with the higher
 | MobileNetV2 w1.0 | 2.35 | **80.74** / 80.86 | 80.06 / 80.46 | SGD |
 | MobileNetV2 w1.4 | 4.50 | **82.58** / 82.36 | 81.98 / 82.18 | SGD |
 
-For w0.5, SGD with lr 0.01 is clearly under-trained (60.6 % vs 74.6 % with AdamW). This matters for interpreting the results in §6.7.
+For w0.5, SGD with lr 0.01 is clearly under-trained (60.6 % vs 74.6 % with AdamW). This matters for interpreting the results in Section 6.7.
 
 ### 6.3 Temperature × α grid (O4)
 
@@ -262,7 +262,7 @@ validation and test pick different "best" cells. The whole grid spans only about
 
 **Decision.** We therefore did **not** tune (T, α) per student. One common setting, **T = 2, α = 0.9**, is used for all students (it is within
 noise of the validation optimum on w1.0, it did not harm w0.5 in earlier exploratory runs, and it gave gains for the larger students in those runs). The consequences of this choice
-are examined in §6.5.
+are examined in Section 6.5.
 
 ### 6.4 Main result: baseline vs KD at four sizes, three seeds (O3, O6)
 
@@ -323,7 +323,7 @@ every student was also distilled with the *other* recipe (seed 42; the 8 baselin
 
 * **With AdamW alone** the gain rises with width, +0.45 → +1.07 → +1.87 pp, so the width trend is not only an optimizer artefact.
 * **With SGD** the trend holds from w1.0 to w1.4, but w0.5 is a large outlier (+6.25 pp). Its SGD baseline is badly under-trained (60.63 %), so the
-  teacher's soft labels help it a lot — the same pattern as in §6.7.
+  teacher's soft labels help it a lot — the same pattern as in Section 6.7.
 * MobileNetV3-Small gains about the same under both optimizers.
 * These swapped-recipe runs are single-seed.
 
@@ -506,11 +506,11 @@ unavailable; (iii) for MobileNets check depthwise layers before quantizing.
 ## 9. Limitations and threats to validity
 
 **Statistics**
-* Main results use three seeds; the optimizer swap (§6.6), alpha probe (§6.5), from-scratch (§6.7), low-data (§6.8) and PlantVillage (§6.9) experiments are **single-seed**. With three seeds the standard-deviation estimates are crude.
+* Main results use three seeds; the optimizer swap (Section 6.6), alpha probe (Section 6.5), from-scratch (Section 6.7), low-data (Section 6.8) and PlantVillage (Section 6.9) experiments are **single-seed**. With three seeds the standard-deviation estimates are crude.
 * Validation noise (≈0.55 pp) is larger than many of the differences between neighbouring (T, α) cells, so the grid should not be read as a precise optimum.
 
 **Design**
-* Optimizer is confounded with model size in the main table (§6.6 partly addresses this; w0.5 under SGD is a special case).
+* Optimizer is confounded with model size in the main table (Section 6.6 partly addresses this; w0.5 under SGD is a special case).
 * A single common (T, α) = (2, 0.9) was used for all students; α = 0.5 was slightly better for the larger students (within noise). Temperature was not re-tuned per student.
 * The teacher was trained once (one seed) on all training data, also in the low-data study.
 * From-scratch runs are not converged after 20 epochs.
@@ -595,7 +595,7 @@ python scripts\phone_benchmark.py --adb <path to adb>
 | w1.0 | baseline | 80.86 | 80.86 | 80.74 |
 | w1.0 | KD | 81.71 | 81.75 | 81.42 |
 
-(The per-seed values of w1.4 and MobileNetV3-Small are in `results/results_v2.csv`; gains per seed are in §6.4. The seed-1 distilled MobileNetV3-Small run reached 79.19 % and the seed-1 distilled w1.0 run 81.42 %.)
+(The per-seed values of w1.4 and MobileNetV3-Small are in `results/results_v2.csv`; gains per seed are in Section 6.4. The seed-1 distilled MobileNetV3-Small run reached 79.19 % and the seed-1 distilled w1.0 run 81.42 %.)
 
 ### A.2 Exported-model agreement with PyTorch
 
@@ -647,6 +647,6 @@ This appendix records how the work evolved, because several early results were l
    T = 2, α = 0.9 was adopted instead of the validation optimum of the w1.0 grid (T = 4, α = 0.9), because the earlier w0.5 data showed that high-T / high-α settings can hurt small students and because the grid
    differences are within noise.
 4. **Additions.** Three seeds for all students, an α probe, a swapped-optimizer control, a from-scratch comparison, a low-data study, the PlantVillage study, the export pipeline, the INT8 diagnosis and the phone benchmark were added in that order.
-5. **Wrong turns that were corrected.** (a) The claim "gain depends only on size" was withdrawn because size, optimizer and architecture were mixed (§6.6). (b) The hypothesis that per-tensor weight quantization caused the INT8 failures was tested and rejected (§7.4).
+5. **Wrong turns that were corrected.** (a) The claim "gain depends only on size" was withdrawn because size, optimizer and architecture were mixed (Section 6.6). (b) The hypothesis that per-tensor weight quantization caused the INT8 failures was tested and rejected (Section 7.4).
    (c) An early impression that distillation does nothing for w0.5 (from the v1 single-protocol runs) was replaced by the 3-seed result of a small but consistent +0.46 pp.
 6. **Work organisation.** The project was implemented by one team member; the repository history documents the sequence above.
