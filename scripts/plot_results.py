@@ -125,20 +125,24 @@ def plot_pareto(summ, teacher, T, a, out: Path) -> None:
 
 
 def plot_kd_gain(summ, out: Path) -> None:
-    plt.figure(figsize=(6, 4))
-    xs, ys = [s["params_m"] for s in summ], [s["gain"] for s in summ]
-    errs = [s["gain_std"] for s in summ]
-    if any(e > 0 for e in errs):
-        plt.errorbar(xs, ys, yerr=errs, marker="o", capsize=3)
-    else:
-        plt.plot(xs, ys, marker="o")
-    for s in summ:
-        plt.annotate(f"{s['label']} (n={s['n_seeds']})", (s["params_m"], s["gain"]),
-                     textcoords="offset points", xytext=(0, 8), ha="center", fontsize=8)
+    plt.figure(figsize=(6.5, 4.2))
+    fam = [s for s in summ if s["tag"].startswith("w")]      # MobileNetV2 widths: one family -> connect
+    other = [s for s in summ if not s["tag"].startswith("w")]  # other architectures: separate points
+    for group, style, label in ((fam, "o-", "MobileNetV2 (widths 0.5 / 1.0 / 1.4)"), (other, "s", "MobileNetV3-Small")):
+        if not group:
+            continue
+        xs, ys = [s["params_m"] for s in group], [s["gain"] for s in group]
+        errs = [s["gain_std"] for s in group]
+        plt.errorbar(xs, ys, yerr=errs if any(e > 0 for e in errs) else None, fmt=style, capsize=3, label=label)
+        for s in group:
+            plt.annotate(f"{s['label']}\n{s['gain']:+.2f} (n={s['n_seeds']})", (s["params_m"], s["gain"]),
+                         textcoords="offset points", xytext=(0, 10), ha="center", fontsize=8)
     plt.axhline(0, color="k", lw=0.8)
+    plt.margins(x=0.1, y=0.15)
     plt.xlabel("student params (M)")
     plt.ylabel("KD gain: test top-1(KD) − top-1(baseline)  (pp)")
-    plt.title("When does KD help the most?")
+    plt.title("When does KD help the most? (error bars = std over seeds)")
+    plt.legend(loc="upper left", fontsize=8)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(out / "kd_gain_v2.png", dpi=150)
