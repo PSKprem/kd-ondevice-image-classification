@@ -34,6 +34,7 @@ RUNS = Path("D:/kd-project/runs_v2")
 EXPORT = Path("D:/kd-project/export")
 OUT = Path("D:/kd-project/hf_upload")
 GITHUB = "https://github.com/PSKprem/kd-ondevice-image-classification"
+DRIVE = "https://drive.google.com/drive/folders/1x28bGIncOd_HTx_T96uGU1_t1ghtlG_t"
 
 # folder name -> (run name, model, width, phone/student tag, label)
 MODELS = {
@@ -157,6 +158,7 @@ pipeline_tag: image-classification
 Final models of course project **P25** (Section B, Team 25): a ResNet-50 teacher distilled (Hinton et al., 2015;
 T = 2, α = 0.9) into MobileNet students, exported to TensorFlow Lite and measured on an Android phone.
 Code, full results and the report: {GITHUB}
+Full backup of all 65 training checkpoints, exports and logs (Google Drive): {DRIVE}
 
 ## Models
 

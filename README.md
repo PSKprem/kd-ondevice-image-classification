@@ -9,6 +9,7 @@ answer: *When does Knowledge Distillation help the most?*
 - **References:** Hinton et al. 2015 ([arXiv:1503.02531](https://arxiv.org/abs/1503.02531)), Sandler et al. CVPR 2018 ([arXiv:1801.04381](https://arxiv.org/abs/1801.04381))
 - Project plan and live status: [`task.md`](task.md) · brief: [`project.md`](project.md) · report: [`report/report.pdf`](report/report.pdf)
 - **Final models** (PyTorch `safetensors` + TFLite FP32 / INT8-mixed, 4 distilled students + teacher): [huggingface.co/Premshankark88/p25-kd-mobilenet-cifar100](https://huggingface.co/Premshankark88/p25-kd-mobilenet-cifar100) (private for now)
+- **Full backup** (all 65 training checkpoints, all exports, training logs): [Google Drive folder](https://drive.google.com/drive/folders/1x28bGIncOd_HTx_T96uGU1_t1ghtlG_t)
 
 ## KD loss (Hinton 2015)
 
