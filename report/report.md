@@ -2,7 +2,7 @@
 
 **Project P25 — Section B, Team 25**
 
-| | |
+| Field | Details |
 |---|---|
 | **Team members** | Shivang Dubey (su-24137), Moirangthem Joel Singh (su-24080), Rajiv Kumar (su-24109), Prem Shankar Kushawaha (su-24100) |
 | **Authorship note** | The implementation, experiments and this report were carried out by a single team member. |
@@ -27,6 +27,7 @@
 10. [Conclusion](#10-conclusion)
 11. [Reproducibility](#11-reproducibility)
 12. [References](#12-references)
+
 - [Appendix A — Full result tables](#appendix-a--full-result-tables)
 - [Appendix B — Hyperparameters](#appendix-b--hyperparameters)
 - [Appendix C — Project history and protocol changes](#appendix-c--project-history-and-protocol-changes)

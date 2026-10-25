@@ -45,3 +45,6 @@ Thumbs.db
 report/*.aux
 report/*.log
 report/*.out
+
+# generated HTML of the report (the PDF is the deliverable)
+report/report.html

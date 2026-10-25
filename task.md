@@ -98,7 +98,7 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [ ] Extra seeds for more students
 
 ### Phase 7 — Report & GitHub
-- [ ] Report draft (outline in section 9), final PDF in `report/report.pdf`
+- [x] Report written 26 Oct: `report/report.md` (full, 12 sections + 3 appendices, numbers cross-checked against the CSVs) and `report/report.pdf` (20 pages, built by `scripts/build_report_pdf.py` via headless Edge; extra figures by `scripts/plot_report_figures.py`). Still open for the report: proof-read by the author, add real names/roll numbers/course info if the submission form needs them, decide how the grader gets access to the private repo
 - [ ] README final check (commands work from a clean clone; results tables match CSVs)
 - [ ] Push to GitHub (no `*.pt`, no secrets); keep commit history meaningful
 - [ ] Upload best checkpoints + `.tflite` to Hugging Face / GitHub Release; backup to OneDrive / Drive
