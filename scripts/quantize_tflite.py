@@ -5,8 +5,9 @@ model gave ~1.5% accuracy; tf_converter backend failed on a layout bug). Quantiz
 verified FP32 .tflite flatbuffer avoids the ONNX->TF step entirely.
 
 Modes
-  dynamic : weights int8, activations float32 (no calibration data)
-  static  : weights int8 + activations int8 (needs --calib, an .npy of NHWC float32 images)
+  dynamic    : weights int8 (channel-wise), activations quantized at run time
+  weightonly : weights int8 (smaller file), computation in float32 -> accuracy ~ FP32, no int8 speed-up
+  static     : weights int8 + activations int8 (needs --calib, an .npy of NHWC float32 images)
 
 Usage (export venv):
     D:\\kd-project\\.venv-export\\Scripts\\python.exe scripts/quantize_tflite.py ^
@@ -25,13 +26,16 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="P25 TFLite INT8 quantization")
     ap.add_argument("--fp32", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--mode", choices=["dynamic", "static"], default="dynamic")
+    ap.add_argument("--mode", choices=["dynamic", "static", "weightonly"], default="dynamic")
     ap.add_argument("--calib", default=None, help=".npy NHWC float32 images (static mode)")
     args = ap.parse_args()
 
     qt = quantizer.Quantizer(float_model=args.fp32)
     if args.mode == "dynamic":
         qt.load_quantization_recipe(recipe.dynamic_wi8_afp32())
+        result = qt.quantize()
+    elif args.mode == "weightonly":
+        qt.load_quantization_recipe(recipe.weight_only_wi8_afp32())
         result = qt.quantize()
     else:
         if not args.calib:

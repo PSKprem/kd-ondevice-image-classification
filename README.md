@@ -141,6 +141,21 @@ mixed with size, so size alone cannot be credited. The final tables and figures 
 `scripts/plot_results.py` (`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still
 to come (see `task.md`).
 
+### Exported TFLite models (CIFAR-100 test set; INT8 = dynamic-range, full 10k images)
+
+| Model | FP32 .tflite (MiB) | INT8 .tflite (MiB) | PyTorch FP32 KD / baseline | INT8 KD / baseline |
+|---|---|---|---|---|
+| MobileNetV2 w0.5 | 3.12 | 0.94 | 75.03 / 74.58 | 71.63 / 71.75 |
+| MobileNetV3-Small | 6.22 | 1.75 | 80.02 / 78.34 | 13.14 / 9.76 (broken) |
+| MobileNetV2 w1.0 | 8.95 | 2.52 | 81.71 / 80.86 | 81.78 / 80.59 |
+| MobileNetV2 w1.4 | 17.10 | 4.65 | 83.61 / 82.36 | 83.23 / 81.97 |
+| ResNet-50 (teacher) | 90.39 | — | 85.46 (FP32) | — |
+
+FP32 TFLite predictions are identical to PyTorch (100% agreement on all models). Dynamic INT8 is accurate for
+w1.0 / w1.4 (and the KD advantage of about +1.2 pp survives quantization), loses 3.4 pp on w0.5 and breaks MobileNetV3-Small.
+On 2000 test images, weight-only INT8 keeps MBV3-S usable (79.65 vs 80.30 FP32) but still costs w0.5 about 2.9 pp
+(72.85 vs 75.75); static INT8 was worse. The reason is not established. Latency on the phone is still to come.
+
 ### Low-data study (CIFAR-100, pretrained, test top-1, 20 epochs, single seed, KD T=2 alpha=0.9)
 
 | Student | Train data | Baseline | KD | Gain (pp) |
