@@ -66,7 +66,7 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [ ] Optional: `python scripts/queue_v2_exp4.py --seeds` → seeds 0, 1 for baseline + KD on w0.5, w1.0 (~1.7 h) to show gain vs seed noise
 
 ### Phase 3 — Plots & tables
-- [ ] Update `scripts/plot_results.py` to read `results_v2.csv` (currently reads v1 `results.csv`, `--csv` default)
+- [x] `scripts/plot_results.py` rewritten for v2 (reads `results_v2.csv` + `best_config_v2.json`; tested on partial data). Run `python scripts/plot_results.py` AFTER the Phase 2 queue finishes -> `pareto_v2.png`, `kd_gain_v2.png`, `heatmap_v2.png`, `alpha_probe_v2.png`, `results/summary_table_v2.csv`
 - [ ] Figures: Pareto (test acc vs params, baseline vs KD, + teacher), KD gain vs width, T × α heatmap (have), student-vs-teacher table
 - [ ] Optional: from-scratch vs pretrained comparison redone on v2 (v1 numbers exist)
 
@@ -75,7 +75,7 @@ Preliminary v1 trend (test-selected, optimistic): KD gain ≈ 0 on w0.5 (3 seeds
 - [ ] Export test on ONE model (w1.0 KD checkpoint): PyTorch → ONNX → TFLite FP32 → INT8. Check exported accuracy ≈ PyTorch accuracy
 - [ ] Export 4 student architectures (KD checkpoints; baseline and KD have identical size/latency, only accuracy differs; check INT8 accuracy for both) + teacher FP32 for reference
 - [ ] Per model record: file size (MB), params, FLOPs, median latency (ms, ~100 runs), accuracy of exported model
-- [ ] Phone: Android phone **available, USB debugging already ON** (user confirmed 25 Oct). Still to do: install Android platform-tools (`adb` is not installed on the laptop yet), check `adb devices` shows the phone (accept the RSA prompt), push TFLite `benchmark_model` binary, run via `scripts/benchmark.py`
+- [x] Phone: Android phone available, USB debugging ON; platform-tools installed at `D:\Downloads\platform-tools-latest-windows\platform-tools\adb.exe` (not on PATH), phone connection checked by user (25 Oct)\n- [ ] Still to do: push TFLite `benchmark_model` binary to the phone, run via `scripts/benchmark.py` (pass the adb path or add it to PATH)
 - [ ] Record phone model, Android version, CPU, threads used and whether XNNPACK / GPU delegate is on (needed for the report's latency table)
 - [ ] Laptop CPU latency may be added as an extra column, clearly labelled as a proxy (not the main on-device number)
 
