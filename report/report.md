@@ -8,7 +8,7 @@
 | **Authorship note** | The implementation, experiments and this report were carried out by a single team member. |
 | **Domain** | Image classification |
 | **Datasets** | CIFAR-100 (main study), PlantVillage (secondary study) |
-| **Code repository** | https://github.com/PSKprem/kd-ondevice-image-classification (private) |
+| **Code repository** | https://github.com/PSKprem/kd-ondevice-image-classification (public) |
 | **Submission deadline** | 20 Nov 2026, 11:59 PM IST |
 
 ---
@@ -108,7 +108,7 @@ suggested dataset *"CIFAR-100 or PlantVillage"*; research angle *"Accuracy-vs-mo
 | Accuracy-vs-model-size Pareto curve | Done | accuracy vs parameters (Section 6.4) and accuracy vs file size, FP32 and INT8 (Section 7.6) |
 | Answer *when does KD help the most?* | Done | Section 6.4–6.8 and Section 8 |
 | Reference papers (Hinton 2015, Sandler 2018) | Done | Section 3, Section 12 |
-| Deliverables: report and GitHub repository | Report: this document; repository: yes (private) | Section 11 |
+| Deliverables: report and GitHub repository | Report: this document; repository: yes (public) | Section 11 |
 
 Additions beyond the brief: a second student architecture (MobileNetV3-Small), controls for optimizer, initialization and data size, the INT8 diagnosis, and the three-seed statistics.
 

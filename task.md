@@ -11,7 +11,7 @@ Every requirement of the project sheet is met (see report Section 2.4). What is 
 | # | Remaining task | Who | Needed? |
 |---|---|---|---|
 | 1 | Proof-read `report/report.pdf` | user | **Yes** |
-| 2 | Decide how the grader gets access to the **private** GitHub repo (make public or invite) | user | **Yes** |
+| 2 | ~~Decide how the grader gets access to the **private** GitHub repo (make public or invite)~~ **Done** (repo is now public) | user | Done |
 | 3 | Add roll numbers / course info to the report if the submission form asks for them | user (tell the agent) | Only if asked |
 | 4 | ~~Back up checkpoints and `.tflite` files to Google Drive~~ **Done** (link in README). User: check in Drive that the folder size is ≈ 3.8 GB | user | Done |
 | 5 | Phone: Developer options -> "Revoke USB debugging authorizations" | user | Recommended (security) |
@@ -120,11 +120,11 @@ PlantVillage saturated (~99 %), no clear effect (+0.05 / +0.31).
 - [x] Report: `report/report.md` (12 sections + 3 appendices, numbers cross-checked against the CSVs), `report/report.pdf` (21 pages, `scripts/build_report_pdf.py`), "Section" wording, compliance table with the project sheet (Section 2.4)
 - [x] Report revision 26 Oct (after an external review): full per-seed table for all four students in Appendix A.1; Section 7.6 breakdown of the 34× / 12.5× ratios (architecture 10.1× vs INT8 3.4×; INT8-vs-INT8 size 8.8×, teacher INT8 file 23.01 MiB, its accuracy/latency not measured); capacity-gap related work (Cho & Hariharan 2019, Mirzadeh et al. 2020) in Sections 3 and 8; from-scratch claims limited to "within the same 20-epoch budget". PDF rebuilt (21 pages)
 - [x] `project.md` aligned with the official project sheet (row P25)
-- [x] GitHub: everything committed and pushed to `PSKprem/kd-ondevice-image-classification` (private); no `*.pt`, `.tflite`, datasets or secrets in git
+- [x] GitHub: everything committed and pushed to `PSKprem/kd-ondevice-image-classification` (public); no `*.pt`, `.tflite`, datasets or secrets in git
 - [x] README updated with all results, export pipeline and phone benchmark
 - [x] This file updated (19 Nov)
 - [ ] **Proof-read the report** (user)
-- [ ] **Grader access to the private repo** (user decision: make public or invite)
+- [x] **Grader access to the repo** (repo is now public — grader can access directly)
 - [ ] Roll numbers / course info in the report, only if the submission form needs them
 - [x] Hugging Face (26 Oct): final models uploaded to https://huggingface.co/Premshankark88/p25-kd-mobilenet-cifar100 (**private**): 4 distilled students + teacher, each `model.safetensors` (weights only, verified identical to `best.pt`), `config.json`, `model_fp32.tflite`, `model_int8_mixed.tflite` (students), plus `classes.json` and a model card. 263 MiB, 21 files; remote sizes verified, 2 files re-downloaded with matching SHA-256. Built by `scripts/prepare_hf_upload.py`, uploaded by `scripts/upload_hf.py` (`--public` to create public). Make it public together with the GitHub repo if the grader needs access
 - [x] Full backup on Google Drive (26 Oct, by the user, account su-24100@sitare.org): folder "DeepLearnig(Project)" with `export/`, `logs/`, `runs_v2/` — https://drive.google.com/drive/folders/1x28bGIncOd_HTx_T96uGU1_t1ghtlG_t (shared "anyone with the link"; agent verified the three top-level folders are visible without login, but could not check the file count/size inside). Link added to README, report Section 11 and the HF model card
@@ -177,7 +177,7 @@ Logs: `D:\kd-project\logs\`. Checkpoints: `D:\kd-project\runs_v2\<run_name>\best
 | PlantVillage leakage | Approximate block split; stated as a limitation |
 | KD gains within noise | 3 seeds on all students; gains positive in all 12 seed pairs |
 | Checkpoints only on one disk | **Open** → backup (task 4 in Section 0) |
-| Grader cannot open a private repo | **Open** → task 2 in Section 0 |
+| Grader cannot open a private repo | **Resolved** → repo is now public |
 
 ## 9. Repository layout (actual)
 
