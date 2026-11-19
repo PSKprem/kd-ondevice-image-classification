@@ -22,8 +22,8 @@ width_mult: 1.0
 kd: true
 teacher_model: resnet50
 teacher_ckpt: D:/kd-project/runs_v2/teacher_resnet50_cifar100_v2/best.pt
-temperature: 4.0           # T  (sweep: 1, 2, 4, 8)
-alpha: 0.5                 # alpha (sweep: 0.1, 0.5, 0.9)
+temperature: 2.0           # final common setting (grid: 1, 2, 4, 8)
+alpha: 0.9                 # final common setting (grid: 0.1, 0.5, 0.9)
 
 # ---- optimization (MUST match baseline for fairness) ----
 epochs: 20

@@ -296,7 +296,7 @@ Mean ± standard deviation over seeds 42 / 0 / 1; T = 2, α = 0.9.
 * MobileNetV3-Small, a different architecture, shows a large but more variable gain (+0.76 to +2.15 pp).
 * The distilled w1.4 student (84.06 %) is within 1.4 pp of the 23.7 M-parameter teacher with 5× fewer parameters;
   the distilled w1.0 student is 3.8 pp below it with 10× fewer.
-* The student with the *largest gap to the teacher* (w0.5, 10.9 pp) has the *smallest* gain, so a large teacher–student gap alone does not predict a large gain.
+* The student with the *largest gap to the teacher* (w0.5, 10.8 pp) has the *smallest* gain, so a large teacher–student gap alone does not predict a large gain.
 
 ### 6.5 Sensitivity to α (O4)
 
@@ -470,7 +470,7 @@ Latency in milliseconds per image (distilled models):
 
 * INT8-mixed is the fastest variant for every student: 13 % (w0.5) to 32 % (w1.4) faster than FP32 on one thread, and also fastest on four threads.
 * Plain dynamic INT8 is *slower* than FP32 on four threads for w0.5, w1.0 and w1.4, so the mixed recipe is better in speed as well as in accuracy.
-* The two small models do not profit from extra threads (MobileNetV3-Small is even slower on four threads); only the larger models scale.
+* MobileNetV3-Small does not profit from extra threads (it is even slower on four threads); w0.5 improves by 12–22 % (10.05 → 7.88 ms FP32, 8.71 → 7.68 ms mixed), and the larger models scale strongly.
 * Memory footprint increase reported by `benchmark_model` (FP32, 1 thread): 17 MB (w0.5), 20 MB (MobileNetV3-Small), 36 MB (w1.0), 59 MB (w1.4), 196 MB (teacher).
 
 ### 7.6 The headline trade-off

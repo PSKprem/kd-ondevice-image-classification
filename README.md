@@ -42,6 +42,9 @@ D:\kd-project\.venv-kaggle\Scripts\pip install kaggle
 Data, checkpoints, exports and logs live under `D:\kd-project\` (kept **out** of git — see `.gitignore`).
 Runs write to `D:\kd-project\runs_v2\` and `results/results_v2.csv`.
 
+**Cloning on another machine?** The configs contain absolute `D:/kd-project/...` paths. Change `data_root`,
+`out_dir`, `teacher_ckpt` and `plantvillage_dir` in `configs/*.yaml` before training.
+
 ### Data
 
 - **CIFAR-100** downloads automatically into `D:\kd-project\data`.
@@ -126,7 +129,7 @@ Phone latency is measured with TFLite `benchmark_model` through `adb` (see `scri
 | `scripts/benchmark.py` | Params / FLOPs / file size (+ on-device latency via adb) |
 | `scripts/queue_night3.*`, `queue_exp4.py`, `queue_seeds.py`, `sweep*.{py,ps1}`, `overnight_night1.ps1`, `pretrained_baselines.ps1` | v1 history (test-selected protocol); not used for headline results |
 
-## Results so far (CIFAR-100, v2, test top-1; mean ± std over 3 seeds: 42 / 0 / 1)
+## Results (CIFAR-100, v2, test top-1; mean ± std over 3 seeds: 42 / 0 / 1)
 
 | Model | Params (M) | Seeds | Baseline | KD (T=2, alpha=0.9) | Gain (pp) |
 |---|---|---|---|---|---|
@@ -141,7 +144,7 @@ w1.4 +1.25 / +2.02 / +1.84, MBV3-S +1.68 / +2.15 / +0.76 — positive for every 
 with width inside MobileNetV2 (+0.46, +0.81, +1.70), but optimizer (AdamW for w0.5 / MBV3-S, SGD for w1.0 / w1.4, each
 chosen on val) and architecture are mixed with size; the optimizer check below shows the width trend also holds with
 AdamW alone. The final tables and figures are produced by `scripts/plot_results.py`
-(`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are still to come (see `task.md`).
+(`results/summary_table_v2.csv`, `results/figures/`). On-device latency results are reported below.
 
 ### Exported TFLite models (CIFAR-100 test set, full 10k images; KD checkpoints / baseline checkpoints)
 
@@ -153,7 +156,7 @@ AdamW alone. The final tables and figures are produced by `scripts/plot_results.
 | MobileNetV2 w1.4 | 17.10 | 83.61 / 82.36 | 4.65 | 83.23 / 81.97 | 4.79 | 83.55 / 82.26 |
 | ResNet-50 (teacher) | 90.39 | 85.46 | — | — | — | — |
 
-FP32 TFLite predictions are identical to PyTorch (100% agreement on all models). "Mixed" = regular convs and the
+FP32 TFLite predictions are identical to PyTorch (100% agreement on every distilled student and the teacher). "Mixed" = regular convs and the
 classifier in int8, depthwise convs kept in float32. Plain dynamic INT8 loses 3.4 pp on w0.5 and breaks
 MobileNetV3-Small; a PyTorch diagnosis (`scripts/diag_quant.py`) shows the w0.5 loss comes from its depthwise layers
 (int8 on depthwise only: -2.6 pp; same layers in w1.0: -0.05 pp) and that the conversion itself is correct (PyTorch
@@ -178,8 +181,8 @@ Battery temperature stayed at 32.8–33.1 °C during the whole run, so no therma
 
 Findings: (1) the INT8 "mixed" models (depthwise convs kept float32) are the fastest at 1 thread for every student
 (about 13–32 % faster than FP32) and at 4 threads for every student (only marginally for w0.5); plain dynamic INT8 is slower than FP32 on 4 threads
-for w0.5, w1.0 and w1.4; (2) for the two small models extra threads do not help (MobileNetV3-Small is even slower on 4 threads
-than on 1), the models are too small to parallelise; (3) the best compromise student (w1.0 KD, INT8 mixed) is 34x smaller than
+for w0.5, w1.0 and w1.4; (2) MobileNetV3-Small does not profit from extra threads (it is even slower on 4 threads
+than on 1), while w0.5 improves by 12–22 % (10.05 → 7.88 ms FP32, 8.71 → 7.68 ms mixed); the larger models scale strongly; (3) the best compromise student (w1.0 KD, INT8 mixed) is 34x smaller than
 the FP32 teacher (2.62 vs 90.39 MiB) and 12.5x faster at 1 thread (18.0 vs 225.4 ms) for −3.7 pp accuracy (81.78 vs 85.46).
 Caveats: single phone; the binary runs outside an Android app, which can change performance slightly; the XNNPACK delegate
 took only 80 of 120 graph nodes for w1.0 (cause not investigated); the teacher was not quantized.
@@ -246,5 +249,5 @@ scripts/    queues (v2 + v1 history), plot_results.py, export.py, quantize_tflit
 results/    results_v2.csv, best_recipes_v2.csv, best_config_v2.json, kd_gain_v2.csv, alpha_probe_v2.csv,
             summary_table_v2.csv, results.csv + quick_tests.csv (v1 history), figures/
 notebooks/  optional
-report/     report.pdf (to do)
+report/     report.md, report.pdf
 ```

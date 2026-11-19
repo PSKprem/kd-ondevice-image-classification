@@ -1,6 +1,6 @@
 # P25 — Task Plan: Knowledge Distillation for On-Device Image Classification
 
-> Brief: `project.md` (mirrors the official project sheet) · How to run: `README.md` · Report: `report/report.pdf` · Last updated: 26 Oct 2026
+> Brief: `project.md` (mirrors the official project sheet) · How to run: `README.md` · Report: `report/report.pdf` · Last updated: 19 Nov 2026
 > **Working alone** (the 4-member team split of the original plan is not used; the report says this honestly).
 
 ## 0. Current status (read this first)
@@ -117,12 +117,12 @@ PlantVillage saturated (~99 %), no clear effect (+0.05 / +0.31).
 - [ ] *Optional:* extra seeds for the single-seed side experiments (optimizer swap, from scratch, low-data, alpha probe)
 
 ### Phase 7 — Report & GitHub
-- [x] Report: `report/report.md` (12 sections + 3 appendices, numbers cross-checked against the CSVs), `report/report.pdf` (20 pages, `scripts/build_report_pdf.py`), "Section" wording, compliance table with the project sheet (Section 2.4)
-- [x] Report revision 26 Oct (after an external review): full per-seed table for all four students in Appendix A.1; Section 7.6 breakdown of the 34× / 12.5× ratios (architecture 10.1× vs INT8 3.4×; INT8-vs-INT8 size 8.8×, teacher INT8 file 23.01 MiB, its accuracy/latency not measured); capacity-gap related work (Cho & Hariharan 2019, Mirzadeh et al. 2020) in Sections 3 and 8; from-scratch claims limited to "within the same 20-epoch budget". PDF rebuilt (20 pages)
+- [x] Report: `report/report.md` (12 sections + 3 appendices, numbers cross-checked against the CSVs), `report/report.pdf` (21 pages, `scripts/build_report_pdf.py`), "Section" wording, compliance table with the project sheet (Section 2.4)
+- [x] Report revision 26 Oct (after an external review): full per-seed table for all four students in Appendix A.1; Section 7.6 breakdown of the 34× / 12.5× ratios (architecture 10.1× vs INT8 3.4×; INT8-vs-INT8 size 8.8×, teacher INT8 file 23.01 MiB, its accuracy/latency not measured); capacity-gap related work (Cho & Hariharan 2019, Mirzadeh et al. 2020) in Sections 3 and 8; from-scratch claims limited to "within the same 20-epoch budget". PDF rebuilt (21 pages)
 - [x] `project.md` aligned with the official project sheet (row P25)
 - [x] GitHub: everything committed and pushed to `PSKprem/kd-ondevice-image-classification` (private); no `*.pt`, `.tflite`, datasets or secrets in git
 - [x] README updated with all results, export pipeline and phone benchmark
-- [x] This file updated (26 Oct)
+- [x] This file updated (19 Nov)
 - [ ] **Proof-read the report** (user)
 - [ ] **Grader access to the private repo** (user decision: make public or invite)
 - [ ] Roll numbers / course info in the report, only if the submission form needs them
